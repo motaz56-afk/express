@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db
@@ -14,20 +14,13 @@ class OrderStatus:
     PAID = "PAID"
     REJECTED = "REJECTED"
     CANCELLED = "CANCELLED"
-
     ALL = [PENDING_CONFIRMATION, PENDING, ACCEPTED, PREPARING,
            READY, SERVED, PAID, REJECTED, CANCELLED]
-
     LABELS = {
-        PENDING_CONFIRMATION: "⏳ À confirmer",
-        PENDING: "🕐 En attente",
-        ACCEPTED: "✅ Acceptée",
-        PREPARING: "👨‍🍳 En préparation",
-        READY: "🟢 Prête",
-        SERVED: "🍽️ Servie",
-        PAID: "💰 Payée",
-        REJECTED: "❌ Refusée",
-        CANCELLED: "❌ Annulée",
+        PENDING_CONFIRMATION: "⏳ À confirmer", PENDING: "🕐 En attente",
+        ACCEPTED: "✅ Acceptée", PREPARING: "👨‍🍳 En préparation",
+        READY: "🟢 Prête", SERVED: "🍽️ Servie",
+        PAID: "💰 Payée", REJECTED: "❌ Refusée", CANCELLED: "❌ Annulée",
     }
     COLORS = {
         PENDING_CONFIRMATION: "warning", PENDING: "warning",
@@ -51,8 +44,12 @@ class PaymentMethod:
     LABELS = {ESPECES: "💵 Espèces", CARTE: "💳 Carte", AUTRE: "🔹 Autre"}
 
 
+# =========================================================
+# RESTAURANT — avec abonnement
+# =========================================================
 class Restaurant(db.Model):
     __tablename__ = "restaurants"
+
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(120), nullable=False)
     adresse = db.Column(db.String(255))
@@ -61,16 +58,97 @@ class Restaurant(db.Model):
     actif = db.Column(db.Boolean, default=True)
     cree_le = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # ---- Abonnement ----
+    date_expiration = db.Column(db.DateTime)
+    bloque = db.Column(db.Boolean, default=False)
+    notes_admin = db.Column(db.String(255))
+
     users = db.relationship("User", backref="restaurant", lazy=True)
     tables = db.relationship("Table", backref="restaurant", lazy=True)
     categories = db.relationship("Category", backref="restaurant", lazy=True)
     products = db.relationship("Product", backref="restaurant", lazy=True)
     orders = db.relationship("Order", backref="restaurant", lazy=True)
 
+    # ---------- Méthodes abonnement ----------
+    def initialiser_abonnement(self, mois=8):
+        """Donne un accès initial."""
+        self.date_expiration = datetime.utcnow() + timedelta(days=30 * mois)
+        self.bloque = False
+
+    def prolonger_abonnement(self, mois=8):
+        """Ajoute N mois à partir de la date actuelle (ou d'aujourd'hui si déjà expiré)."""
+        base = self.date_expiration or datetime.utcnow()
+        if base < datetime.utcnow():
+            base = datetime.utcnow()
+        self.date_expiration = base + timedelta(days=30 * mois)
+        self.bloque = False
+
+    def est_expire(self):
+        if self.bloque:
+            return True
+        if not self.date_expiration:
+            return False
+        return datetime.utcnow() > self.date_expiration
+
+    def jours_restants(self):
+        if not self.date_expiration:
+            return 0
+        delta = self.date_expiration - datetime.utcnow()
+        return max(0, delta.days)
+
+    def statut_abonnement(self):
+        if self.bloque:
+            return "BLOQUE"
+        if not self.date_expiration:
+            return "ILLIMITE"
+        jours = self.jours_restants()
+        if jours <= 0:
+            return "EXPIRE"
+        if jours <= 15:
+            return "BIENTOT_EXPIRE"
+        return "ACTIF"
+
     def __repr__(self):
         return f"<Restaurant {self.id} - {self.nom}>"
 
 
+# =========================================================
+# CODE D'ACTIVATION
+# =========================================================
+class ActivationCode(db.Model):
+    __tablename__ = "activation_codes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(32), unique=True, nullable=False, index=True)
+    mois = db.Column(db.Integer, nullable=False, default=8)
+    utilise = db.Column(db.Boolean, default=False)
+    utilise_le = db.Column(db.DateTime)
+    cree_le = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    expire_le = db.Column(db.DateTime)  # date max d'utilisation
+
+    # Trace qui l'a utilisé
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=True)
+    restaurant = db.relationship("Restaurant", foreign_keys=[restaurant_id])
+
+    # Notes admin
+    notes = db.Column(db.String(255))
+    # Qui a payé (tel ou nom)
+    payeur = db.Column(db.String(120))
+
+    def est_utilisable(self):
+        if self.utilise:
+            return False, "Ce code a déjà été utilisé."
+        if self.expire_le and datetime.utcnow() > self.expire_le:
+            return False, "Ce code a expiré."
+        return True, ""
+
+    def __repr__(self):
+        return f"<ActivationCode {self.code} - {'utilisé' if self.utilise else 'valide'}>"
+
+
+# =========================================================
+# UTILISATEUR
+# =========================================================
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -109,7 +187,7 @@ class Table(db.Model):
     orders = db.relationship("Order", backref="table", lazy=True)
 
     def __repr__(self):
-        return f"<Table {self.numero} - resto {self.restaurant_id}>"
+        return f"<Table {self.numero}>"
 
 
 class Category(db.Model):
@@ -138,7 +216,7 @@ class Product(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
 
     def __repr__(self):
-        return f"<Product {self.nom} - {self.prix}>"
+        return f"<Product {self.nom}>"
 
 
 class Order(db.Model):
@@ -153,7 +231,6 @@ class Order(db.Model):
     client_session_id = db.Column(db.String(64), index=True)
     cree_le = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     paye_le = db.Column(db.DateTime)
-
     restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
     table_id = db.Column(db.Integer, db.ForeignKey("tables.id"), nullable=False)
     serveur_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
@@ -165,9 +242,6 @@ class Order(db.Model):
 
     def recalculer_total(self):
         self.total = sum(item.prix_unitaire * item.quantite for item in self.items)
-
-    def __repr__(self):
-        return f"<Order #{self.id} - {self.statut} - {self.total}>"
 
 
 class OrderItem(db.Model):
@@ -182,9 +256,6 @@ class OrderItem(db.Model):
     def sous_total(self):
         return self.prix_unitaire * self.quantite
 
-    def __repr__(self):
-        return f"<OrderItem {self.quantite}x {self.nom_produit}>"
-
 
 class Payment(db.Model):
     __tablename__ = "payments"
@@ -196,34 +267,22 @@ class Payment(db.Model):
     restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
     table_id = db.Column(db.Integer, db.ForeignKey("tables.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-
     table = db.relationship("Table")
     user = db.relationship("User")
     orders = db.relationship("Order", backref="payment", lazy=True,
                              foreign_keys="Order.payment_id")
 
-    def __repr__(self):
-        return f"<Payment #{self.id} - {self.montant} - {self.methode}>"
 
-
-# =========================================================
-# AUDIT LOG
-# =========================================================
 class AuditLog(db.Model):
     __tablename__ = "audit_logs"
-
     id = db.Column(db.Integer, primary_key=True)
     action = db.Column(db.String(50), nullable=False, index=True)
     cible = db.Column(db.String(120))
     details = db.Column(db.Text)
     ip = db.Column(db.String(45))
-    username = db.Column(db.String(60))                 # copie (au cas où)
+    username = db.Column(db.String(60))
     cree_le = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=True, index=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"),
+                              nullable=True, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
-
     user = db.relationship("User")
-
-    def __repr__(self):
-        return f"<AuditLog {self.action} {self.cible}>"

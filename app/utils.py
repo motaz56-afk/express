@@ -3,12 +3,11 @@ Fonctions et décorateurs utilitaires.
 """
 
 from functools import wraps
-from flask import abort, request
+from flask import abort, request, session
 from flask_login import current_user
 
 
 def role_required(*roles_autorises):
-    """Décorateur : restreint l'accès aux rôles listés."""
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -21,18 +20,30 @@ def role_required(*roles_autorises):
     return decorator
 
 
-def log_action(action, cible=None, details=None):
+def abonnement_required(f):
     """
-    Enregistre une action dans la table audit_logs.
-    À appeler après chaque action importante.
+    Décorateur : bloque l'accès si l'abonnement du restaurant est expiré.
+    Redirige vers /abonnement (sauf pour la page abonnement elle-même).
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            abort(401)
+        resto = current_user.restaurant
+        if resto and resto.est_expire():
+            # Autoriser uniquement la page /abonnement et les routes de contact
+            from flask import request, redirect, url_for
+            allowed = ("/abonnement", "/logout", "/static")
+            if not any(request.path.startswith(p) for p in allowed):
+                return redirect("/abonnement")
+        return f(*args, **kwargs)
+    return wrapper
 
-    Ne lève JAMAIS d'exception : si le log échoue, on ne bloque pas l'app.
-    """
+
+def log_action(action, cible=None, details=None):
     try:
         from app import db
         from app.models import AuditLog
-
-        # Récupération sécurisée du contexte
         user_id = None
         username = None
         restaurant_id = None
@@ -40,30 +51,20 @@ def log_action(action, cible=None, details=None):
             user_id = current_user.id
             username = current_user.username
             restaurant_id = current_user.restaurant_id
-
         ip = None
         try:
             ip = request.remote_addr
         except RuntimeError:
-            # Pas de contexte de requête (ex: test unitaire)
             pass
-
-        log = AuditLog(
-            action=action,
-            cible=cible,
-            details=details,
-            ip=ip,
-            username=username,
-            restaurant_id=restaurant_id,
-            user_id=user_id,
-        )
+        log = AuditLog(action=action, cible=cible, details=details,
+                       ip=ip, username=username,
+                       restaurant_id=restaurant_id, user_id=user_id)
         db.session.add(log)
         db.session.commit()
     except Exception as e:
-        # On n'empêche jamais l'app de fonctionner à cause d'un log raté
         try:
             from app import db
             db.session.rollback()
         except Exception:
             pass
-        print(f"[audit] Erreur lors de l'enregistrement du log : {e}")
+        print(f"[audit] Erreur : {e}")

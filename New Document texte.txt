@@ -1,0 +1,3 @@
+postgresql://express_user:WexFsdWsbWgbCMbc12Dg81cx08QxNInm@dpg-dakobvjl550s73euuh80-a/express_gzu6
+
+WrRIo3Hk7HqyeGU0YhofsUnmh95HMuyirhw9RzlN-YY6giREV6baEGyTmZDTg3L5

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Abonnement — EXPRESS{% endblock %}
+
+{% block content %}
+
+{% set statut = resto.statut_abonnement() %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+    {% if statut == "EXPIRE" or statut == "BLOQUE" %}
+        <div class="card-luxe" style="border-top:4px solid var(--danger);">
+            <div class="card-header" style="background:linear-gradient(135deg,#8b1f14 0%,var(--danger) 100%);color:#fff;">
+                ⚠️ Votre abonnement EXPRESS a expiré
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div style="font-size:4rem;">🔒</div>
+                    <h3 class="mt-3">Accès suspendu</h3>
+                    <p class="text-muted">
+                        Pour réactiver votre restaurant « {{ resto.nom }},
+                        renouvelez votre abonnement annuel.
+                    </p>
+                </div>
+
+                <div class="card mb-4" style="border:2px solid var(--or);background:#fdf8ed;">
+                    <div class="card-body text-center">
+                        <h2 style="font-family:'Playfair Display',serif;color:var(--or-fonce);margin:0;">
+                            80 DT
+                        </h2>
+                        <div class="text-muted small mt-1">pour 8 mois d'accès</div>
+                        <hr>
+                        <div style="font-size:1.5rem;font-weight:700;color:var(--noir);">
+                            📞 52 305 518
+                        </div>
+                        <div class="text-muted small">Appelez ou WhatsApp</div>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Comment procéder ?</h5>
+                <ol class="list-group list-group-numbered mb-4">
+                    <li class="list-group-item">Appelez ou WhatsApp le <strong>52 305 518</strong></li>
+                    <li class="list-group-item">Payez <strong>80 DT</strong> (espèces / virement / D17)</li>
+                    <li class="list-group-item">Recevez un <strong>code d'activation</strong> unique</li>
+                    <li class="list-group-item">Entrez-le ci-dessous → accès réactivé immédiatement</li>
+                </ol>
+
+                <hr>
+
+                <h5 class="mb-3">🔑 Entrer un code d'activation</h5>
+                <form method="POST">
+                    <div class="input-group input-group-lg">
+                        <input type="text" name="code" class="form-control"
+                               placeholder="EXP-XXXX-XXXX"
+                               style="text-transform:uppercase;letter-spacing:0.1em;font-family:monospace;"
+                               autocomplete="off" required>
+                        <button class="btn btn-primary">ACTIVER</button>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        Le code vous est fourni après paiement. Il est à usage unique.
+                    </small>
+                </form>
+            </div>
+        </div>
+
+    {% elif statut == "BIENTOT_EXPIRE" %}
+        <div class="card-luxe" style="border-top:4px solid var(--warning);">
+            <div class="card-header" style="background:linear-gradient(135deg,#a67c1f 0%,var(--warning) 100%);color:#0f0f12;">
+                ⏰ Votre abonnement expire bientôt
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div style="font-size:4rem;">⏰</div>
+                    <h3 class="mt-3">Il reste {{ resto.jours_restants() }} jours</h3>
+                    <p class="text-muted">
+                        Expiration le <strong>{{ resto.date_expiration.strftime('%d/%m/%Y') }}</strong>
+                    </p>
+                </div>
+                <div class="card mb-4" style="border:2px solid var(--or);background:#fdf8ed;">
+                    <div class="card-body text-center">
+                        <h2 style="font-family:'Playfair Display',serif;color:var(--or-fonce);margin:0;">
+                            80 DT
+                        </h2>
+                        <div class="text-muted small mt-1">pour 8 mois supplémentaires</div>
+                        <hr>
+                        <div style="font-size:1.5rem;font-weight:700;">
+                            📞 52 305 518
+                        </div>
+                    </div>
+                </div>
+                <form method="POST">
+                    <div class="input-group input-group-lg">
+                        <input type="text" name="code" class="form-control"
+                               placeholder="EXP-XXXX-XXXX"
+                               style="text-transform:uppercase;letter-spacing:0.1em;font-family:monospace;"
+                               autocomplete="off">
+                        <button class="btn btn-primary">ACTIVER</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="card-luxe" style="border-top:4px solid var(--succes);">
+            <div class="card-header" style="background:linear-gradient(135deg,var(--succes) 0%,#35a76b 100%);color:#fff;">
+                ✅ Abonnement actif
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div style="font-size:4rem;">✨</div>
+                    <h3 class="mt-3">Votre abonnement est actif</h3>
+                </div>
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <div class="stat-card stat-succes">
+                            <div class="stat-value">{{ resto.jours_restants() }}</div>
+                            <div class="stat-label">Jours restants</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card stat-or">
+                            <div class="stat-value" style="font-size:1.5rem;">
+                                {{ resto.date_expiration.strftime('%d/%m/%Y') if resto.date_expiration else '—' }}
+                            </div>
+                            <div class="stat-label">Expiration</div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="d-flex gap-2">
+                    <a href="/gerant/" class="btn btn-primary flex-fill">Retour au dashboard</a>
+                    <a href="/logout" class="btn btn-outline-secondary">Déconnexion</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <p class="text-center text-muted small mt-3">
+        Service EXPRESS — Assistance : 📞 52 305 518
+    </p>
+    </div>
+</div>
+{% endblock %}

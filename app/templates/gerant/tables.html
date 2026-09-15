@@ -2,8 +2,22 @@
 {% block title %}Tables — EXPRESS{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">🪑 Tables</h2>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="mb-0">🪑 Tables</h2>
+    {% if not tables %}
+        <form method="POST" action="{{ url_for('gerant.tables_defaut') }}">
+            <button class="btn btn-or">⚡ Créer 10 tables par défaut (01 → 10)</button>
+        </form>
+    {% endif %}
+</div>
 {% include "gerant/_nav.html" %}
+
+{% if not tables %}
+<div class="alert alert-info">
+    💡 Vous n'avez aucune table. Cliquez sur <strong>⚡ Créer 10 tables par défaut</strong>
+    pour commencer (numérotées 01 à 10), ou créez-les manuellement à droite.
+</div>
+{% endif %}
 
 <div class="row g-4">
     <div class="col-md-8">
@@ -46,7 +60,9 @@
                                 </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="4" class="text-muted text-center py-3">Aucune table.</td></tr>
+                        <tr><td colspan="4" class="text-muted text-center py-4">
+                            Aucune table. Utilisez le bouton en haut ou créez-en une à droite.
+                        </td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -62,7 +78,7 @@
                     <div class="mb-3">
                         <label class="form-label">Numéro / Nom</label>
                         <input type="text" name="numero" class="form-control" required
-                               placeholder="07 ou Terrasse 2">
+                               placeholder="11 ou Terrasse 1">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Places</label>

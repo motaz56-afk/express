@@ -21,7 +21,6 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    # Async mode : "threading" en local (Windows), "eventlet" en prod (Render)
     _async_mode = os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
     socketio.init_app(app, cors_allowed_origins="*", async_mode=_async_mode)
 
@@ -36,7 +35,6 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # ==================== SÉCURITÉ : HEADERS HTTP ====================
     @app.after_request
     def ajouter_headers_securite(response):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
@@ -48,24 +46,28 @@ def create_app():
             response.headers["Pragma"] = "no-cache"
         return response
 
-    # ==================== SÉCURITÉ : TIMEOUT SESSION ====================
     @app.before_request
     def rafraichir_session():
         if session.get("_user_id"):
             session.permanent = True
             session.modified = True
 
-    # Blueprints
+    # ==================== BLUEPRINTS ====================
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
+    from app.routes.signup import signup_bp
+    from app.routes.abonnement import abonnement_bp
     from app.routes.gerant import gerant_bp
     from app.routes.serveur import serveur_bp
     from app.routes.cuisine import cuisine_bp
     from app.routes.client_qr import client_qr_bp
     from app.routes.caissier import caissier_bp
     from app.routes.tickets import tickets_bp
+
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(signup_bp)
+    app.register_blueprint(abonnement_bp)
     app.register_blueprint(gerant_bp, url_prefix="/gerant")
     app.register_blueprint(serveur_bp, url_prefix="/serveur")
     app.register_blueprint(cuisine_bp, url_prefix="/cuisine")
@@ -75,11 +77,12 @@ def create_app():
 
     from app import sockets  # noqa: F401
 
-    # Création auto des tables + admin par défaut si base vide
+    # ==================== INIT BASE ====================
     with app.app_context():
         from app import models  # noqa
         try:
             db.create_all()
+            print("[init] Tables vérifiées/créées.")
         except Exception as e:
             print(f"[init] Erreur création tables : {e}")
 
@@ -87,6 +90,7 @@ def create_app():
             from app.models import Restaurant, User
             if not Restaurant.query.first():
                 resto = Restaurant(nom="EXPRESS", adresse="", telephone="")
+                resto.initialiser_abonnement(mois=8)
                 db.session.add(resto)
                 db.session.flush()
                 gerant = User(

@@ -22,23 +22,39 @@ def create_app():
     login_manager.init_app(app)
 
     # ==================== SOCKETIO : async_mode ====================
-    # Détection automatique :
-    # - "gevent" en production (Render / Linux avec gevent installé)
-    # - "threading" en local (Windows sans gevent)
-    _async_mode = os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
-    try:
-        import gevent  # noqa: F401
-        if _async_mode == "threading":
+    # Détection automatique du bon mode :
+    #   - "gevent"    → production (Render / Linux où gevent est installé)
+    #   - "threading" → développement local (Windows sans gevent)
+    #
+    # La variable d'environnement SOCKETIO_ASYNC_MODE peut forcer le mode.
+    _async_mode = os.environ.get("SOCKETIO_ASYNC_MODE", "").strip().lower()
+
+    if not _async_mode:
+        # Aucun mode imposé : on détecte
+        try:
+            import gevent  # noqa: F401
             _async_mode = "gevent"
-    except ImportError:
-        pass
-    socketio.init_app(app, cors_allowed_origins="*", async_mode=_async_mode)
+        except ImportError:
+            _async_mode = "threading"
+    else:
+        # Mode imposé par l'environnement
+        # Si "eventlet" est demandé mais pas dispo, on bascule sur gevent
+        if _async_mode == "eventlet":
+            try:
+                import gevent  # noqa: F401
+                _async_mode = "gevent"
+            except ImportError:
+                _async_mode = "threading"
+
     print(f"[socketio] async_mode = {_async_mode}")
+
+    socketio.init_app(app, cors_allowed_origins="*", async_mode=_async_mode)
 
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
     login_manager.login_message_category = "warning"
 
+    # ==================== MODELS + USER LOADER ====================
     from app import models  # noqa: F401
     from app.models import User
 
@@ -46,6 +62,7 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # ==================== SÉCURITÉ : HEADERS HTTP ====================
     @app.after_request
     def ajouter_headers_securite(response):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
@@ -57,6 +74,7 @@ def create_app():
             response.headers["Pragma"] = "no-cache"
         return response
 
+    # ==================== SÉCURITÉ : TIMEOUT SESSION ====================
     @app.before_request
     def rafraichir_session():
         if session.get("_user_id"):
@@ -86,17 +104,21 @@ def create_app():
     app.register_blueprint(caissier_bp, url_prefix="/caissier")
     app.register_blueprint(tickets_bp, url_prefix="/ticket")
 
+    # ==================== SOCKET EVENTS ====================
     from app import sockets  # noqa: F401
 
-    # ==================== INIT BASE ====================
+    # ==================== INIT BASE DE DONNÉES ====================
     with app.app_context():
         from app import models  # noqa
+
+        # 1. Créer les tables manquantes
         try:
             db.create_all()
             print("[init] Tables vérifiées/créées.")
         except Exception as e:
             print(f"[init] Erreur création tables : {e}")
 
+        # 2. Créer le restaurant + admin par défaut si base vide
         try:
             from app.models import Restaurant, User
             if not Restaurant.query.first():
@@ -104,9 +126,12 @@ def create_app():
                 resto.initialiser_abonnement(mois=8)
                 db.session.add(resto)
                 db.session.flush()
+
                 gerant = User(
-                    prenom="Gérant", nom="Principal",
-                    username="admin", role="GERANT",
+                    prenom="Gérant",
+                    nom="Principal",
+                    username="admin",
+                    role="GERANT",
                     restaurant_id=resto.id,
                 )
                 gerant.set_password("admin123")

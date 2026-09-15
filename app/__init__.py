@@ -21,8 +21,19 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
+    # ==================== SOCKETIO : async_mode ====================
+    # Détection automatique :
+    # - "gevent" en production (Render / Linux avec gevent installé)
+    # - "threading" en local (Windows sans gevent)
     _async_mode = os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
+    try:
+        import gevent  # noqa: F401
+        if _async_mode == "threading":
+            _async_mode = "gevent"
+    except ImportError:
+        pass
     socketio.init_app(app, cors_allowed_origins="*", async_mode=_async_mode)
+    print(f"[socketio] async_mode = {_async_mode}")
 
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."

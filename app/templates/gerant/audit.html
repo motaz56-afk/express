@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Audit — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📜 Journal d'audit</h2>
+{% include "gerant/_nav.html" %}
+
+<div class="card-luxe mb-3">
+    <div class="card-body">
+        <form class="row g-2 align-items-end" method="GET">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Action</label>
+                <select name="action" class="form-select form-select-sm">
+                    <option value="">— Toutes —</option>
+                    {% for a in actions %}
+                        <option value="{{ a }}" {% if a == action_f %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Utilisateur</label>
+                <select name="user" class="form-select form-select-sm">
+                    <option value="">— Tous —</option>
+                    {% for u in users %}
+                        <option value="{{ u }}" {% if u == user_f %}selected{% endif %}>{{ u }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Période</label>
+                <select name="jours" class="form-select form-select-sm">
+                    <option value="1" {% if jours_f == "1" %}selected{% endif %}>24 h</option>
+                    <option value="7" {% if jours_f == "7" %}selected{% endif %}>7 jours</option>
+                    <option value="30" {% if jours_f == "30" %}selected{% endif %}>30 jours</option>
+                    <option value="365" {% if jours_f == "365" %}selected{% endif %}>1 an</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary btn-sm w-100">Filtrer</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('gerant.audit') }}"
+                   class="btn btn-outline-secondary btn-sm w-100">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="zone-audit"
+     hx-get="{{ url_for('gerant.partial_audit') }}"
+     hx-trigger="every 20s, refresh"
+     hx-swap="innerHTML">
+    {% include "gerant/_audit_liste.html" %}
+</div>
+{% endblock %}

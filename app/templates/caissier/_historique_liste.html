@@ -1,0 +1,40 @@
+{# Historique du jour #}
+<div class="card-luxe mb-3">
+    <div class="card-body d-flex justify-content-between">
+        <strong>Total encaissé</strong>
+        <strong class="text-success">{{ '%.3f'|format(total) }} DT</strong>
+    </div>
+</div>
+
+<div class="card-luxe">
+    <div class="table-responsive">
+        <table class="table-luxe mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Heure</th>
+                    <th>Table</th>
+                    <th>Méthode</th>
+                    <th>Par</th>
+                    <th class="text-end">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in paiements %}
+                <tr>
+                    <td>#{{ p.id }}</td>
+                    <td>{{ p.cree_le.strftime('%H:%M') }}</td>
+                    <td>{{ p.table.numero }}</td>
+                    <td>{{ PaymentMethod.LABELS.get(p.methode, p.methode) }}</td>
+                    <td>{{ p.user.prenom }}</td>
+                    <td class="text-end">{{ '%.3f'|format(p.montant) }} DT</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">
+                    Aucun paiement aujourd'hui.
+                </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

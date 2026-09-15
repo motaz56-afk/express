@@ -1,0 +1,33 @@
+{# Liste des logs d'audit #}
+<div class="card-luxe">
+    <div class="table-responsive">
+        <table class="table-luxe mb-0">
+            <thead>
+                <tr>
+                    <th style="width:150px">Date</th>
+                    <th style="width:170px">Action</th>
+                    <th style="width:130px">Utilisateur</th>
+                    <th>Cible</th>
+                    <th>Détails</th>
+                    <th style="width:120px">IP</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for l in logs %}
+                <tr>
+                    <td><small>{{ l.cree_le.strftime('%d/%m %H:%M:%S') }}</small></td>
+                    <td><span class="badge bg-secondary">{{ l.action }}</span></td>
+                    <td><small>{{ l.username or '—' }}</small></td>
+                    <td><code class="small">{{ l.cible or '—' }}</code></td>
+                    <td><small>{{ l.details or '' }}</small></td>
+                    <td><small class="text-muted">{{ l.ip or '—' }}</small></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">
+                    Aucun log sur cette période.
+                </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

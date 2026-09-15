@@ -1,0 +1,39 @@
+# Environnement virtuel
+venv/
+env/
+.venv/
+
+# Base de données locale
+instance/
+*.db
+*.sqlite
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Scripts de setup (pas nécessaires en prod)
+setup_*.py
+fix_*.py
+init_db.py

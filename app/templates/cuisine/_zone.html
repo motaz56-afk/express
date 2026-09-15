@@ -1,0 +1,167 @@
+{# Zone dynamique de la cuisine — rafraîchie en direct #}
+
+{% if a_confirmer %}
+<div class="card-luxe mb-4">
+    <div class="card-header" style="background:linear-gradient(135deg,#a67c1f 0%,#e8a838 100%);color:#fff;">
+        🔔 COMMANDES CLIENT À CONFIRMER ({{ a_confirmer|length }})
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+        {% for c in a_confirmer %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card-luxe h-100" style="border:2px solid var(--warning);">
+                    <div class="card-header" style="background:var(--warning);color:#0f0f12;">
+                        <strong>#{{ c.id }} — Table {{ c.table.numero }}</strong>
+                        <span class="badge bg-dark ms-2">QR</span>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for item in c.items %}
+                        <li class="list-group-item py-1">
+                            <strong>{{ item.quantite }} × {{ item.nom_produit }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Total</strong>
+                            <strong class="text-success">{{ '%.3f'|format(c.total) }} DT</strong>
+                        </div>
+                        {% if c.note %}
+                            <p class="small text-muted">📝 {{ c.note }}</p>
+                        {% endif %}
+                        <div class="d-flex gap-2">
+                            <form method="POST"
+                                  action="{{ url_for('cuisine.accepter', order_id=c.id) }}"
+                                  class="flex-fill">
+                                <button class="btn btn-success w-100">✅ ACCEPTER</button>
+                            </form>
+                            <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                               target="_blank"
+                               class="btn btn-outline-dark"
+                               title="Imprimer le ticket">🖨️</a>
+                            <button class="btn btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#refusModal{{ c.id }}">❌</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="refusModal{{ c.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <form method="POST"
+                          action="{{ url_for('cuisine.refuser', order_id=c.id) }}"
+                          class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Refuser la commande #{{ c.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label class="form-label">Raison (optionnelle)</label>
+                            <select name="raison" class="form-select">
+                                <option value="Produit indisponible">Produit indisponible</option>
+                                <option value="Restaurant occupé">Restaurant occupé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Annuler</button>
+                            <button class="btn btn-danger">Refuser</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <h5 class="text-warning mb-3">🕐 En attente ({{ nouvelles|length }})</h5>
+        {% for c in nouvelles %}
+            <div class="card-luxe mb-3">
+                <div class="card-header" style="background:var(--warning);color:#0f0f12;">
+                    <strong>#{{ c.id }} — Table {{ c.table.numero }}</strong>
+                    {% if c.source == "QR_CODE" %}<span class="badge bg-dark ms-2">QR</span>{% endif %}
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for item in c.items %}
+                    <li class="list-group-item"><strong>{{ item.quantite }} × {{ item.nom_produit }}</strong></li>
+                    {% endfor %}
+                </ul>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('cuisine.commencer', order_id=c.id) }}"
+                              class="flex-fill">
+                            <button class="btn btn-warning w-100">▶️ COMMENCER</button>
+                        </form>
+                        <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                           target="_blank"
+                           class="btn btn-outline-dark"
+                           title="Imprimer le ticket">🖨️</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-muted small">Aucune commande en attente.</div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <h5 class="text-primary mb-3">👨‍🍳 En préparation ({{ en_cours|length }})</h5>
+        {% for c in en_cours %}
+            <div class="card-luxe mb-3">
+                <div class="card-header" style="background:var(--info);color:#fff;">
+                    <strong>#{{ c.id }} — Table {{ c.table.numero }}</strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for item in c.items %}
+                    <li class="list-group-item"><strong>{{ item.quantite }} × {{ item.nom_produit }}</strong></li>
+                    {% endfor %}
+                </ul>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('cuisine.prete', order_id=c.id) }}"
+                              class="flex-fill">
+                            <button class="btn btn-success w-100">✅ MARQUER COMME PRÊTE</button>
+                        </form>
+                        <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                           target="_blank"
+                           class="btn btn-outline-dark"
+                           title="Imprimer le ticket">🖨️</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-muted small">Aucune commande en préparation.</div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <h5 class="text-success mb-3">🟢 Prêtes à servir ({{ pretes|length }})</h5>
+        {% for c in pretes %}
+            <div class="card-luxe mb-3">
+                <div class="card-header" style="background:var(--succes);color:#fff;">
+                    <strong>#{{ c.id }} — Table {{ c.table.numero }}</strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for item in c.items %}
+                    <li class="list-group-item"><strong>{{ item.quantite }} × {{ item.nom_produit }}</strong></li>
+                    {% endfor %}
+                </ul>
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">En attente du serveur…</span>
+                    <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                       target="_blank"
+                       class="btn btn-sm btn-outline-dark"
+                       title="Réimprimer">🖨️</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-muted small">Aucune commande prête.</div>
+        {% endfor %}
+    </div>
+</div>

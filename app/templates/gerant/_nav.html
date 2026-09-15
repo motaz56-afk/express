@@ -1,0 +1,26 @@
+<ul class="nav nav-pills mb-4 flex-wrap">
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.dashboard' %}active{% endif %}"
+           href="{{ url_for('gerant.dashboard') }}">📊 Dashboard</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.categories' %}active{% endif %}"
+           href="{{ url_for('gerant.categories') }}">📂 Catégories</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.produits' %}active{% endif %}"
+           href="{{ url_for('gerant.produits') }}">🍽️ Produits</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.tables' %}active{% endif %}"
+           href="{{ url_for('gerant.tables') }}">🪑 Tables</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.utilisateurs' %}active{% endif %}"
+           href="{{ url_for('gerant.utilisateurs') }}">👥 Utilisateurs</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'gerant.audit' %}active{% endif %}"
+           href="{{ url_for('gerant.audit') }}">📜 Audit</a>
+    </li>
+</ul>

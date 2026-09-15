@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi — Table {{ table.numero }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { background:#faf7f2; font-family: 'Inter', sans-serif; }
+        .entete { background:#0f0f12; color:#c8a86b; padding:1.25rem; text-align:center; }
+        .entete h1 { font-family: 'Playfair Display', serif; font-size:1.5rem; margin:0; color:#c8a86b; }
+        .statut-badge { font-size:1.1rem; padding:0.9rem 1.5rem; border-radius:30px; font-weight:600; }
+        .pulse-success { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(45,143,92,0.6); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(45,143,92,0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="entete">
+    <h1>☕ {{ resto.nom }}</h1>
+    <div style="font-size:0.85rem;opacity:0.8;">Table {{ table.numero }} — Commande #{{ commande.id }}</div>
+</div>
+
+<div class="container py-4">
+    <div class="text-center my-4">
+        <div class="badge bg-{{ OrderStatus.COLORS[commande.statut] }} statut-badge"
+             id="badge-statut">
+            {{ OrderStatus.LABELS[commande.statut] }}
+        </div>
+    </div>
+
+    <div id="zone-alerte"></div>
+
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;">
+        <ul class="list-group list-group-flush">
+        {% for item in commande.items %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ item.quantite }} × {{ item.nom_produit }}</span>
+                <span>{{ '%.2f'|format(item.sous_total()) }} DT</span>
+            </li>
+        {% endfor %}
+        </ul>
+        <div class="card-body d-flex justify-content-between">
+            <strong>TOTAL</strong>
+            <strong>{{ '%.3f'|format(commande.total) }} DT</strong>
+        </div>
+    </div>
+
+    <a href="{{ url_for('client_qr.menu', restaurant_id=resto.id, token=table.token) }}"
+       class="btn btn-outline-dark w-100" style="border-radius:10px;">
+        ← Commander autre chose
+    </a>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+    const socket = io();
+    const orderId = {{ commande.id }};
+
+    // 🔊 Audio (créé au premier clic, restriction navigateur)
+    let audioCtx = null;
+    document.addEventListener("click", () => {
+        if (!audioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) audioCtx = new Ctx();
+        }
+    }, { once: true });
+
+    function jouerSon(type) {
+        if (!audioCtx) return;
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const notes = (type === "pret")
+            ? [{f:1046,d:0,du:0.12},{f:1568,d:0.15,du:0.25}]
+            : [{f:880,d:0,du:0.15},{f:1175,d:0.18,du:0.2}];
+        notes.forEach(n => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = "sine"; o.frequency.value = n.f;
+            g.gain.setValueAtTime(0, t+n.d);
+            g.gain.linearRampToValueAtTime(0.3, t+n.d+0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, t+n.d+n.du);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(t+n.d); o.stop(t+n.d+n.du+0.05);
+        });
+    }
+
+    function vibrer(type) {
+        if (!("vibrate" in navigator)) return;
+        if (type === "pret") navigator.vibrate([150,80,150]);
+        else navigator.vibrate([200,100,200]);
+    }
+
+    socket.on("connect", () => {
+        socket.emit("join_order", { order_id: orderId });
+    });
+
+    const labels = {
+        PENDING_CONFIRMATION: "⏳ À confirmer",
+        PENDING: "🕐 En attente",
+        ACCEPTED: "✅ Acceptée",
+        PREPARING: "👨‍🍳 En préparation",
+        READY: "🟢 Prête",
+        SERVED: "🍽️ Servie",
+        PAID: "💰 Payée",
+        REJECTED: "❌ Refusée"
+    };
+    const colors = {
+        PENDING_CONFIRMATION:"warning", PENDING:"warning",
+        ACCEPTED:"info", PREPARING:"primary",
+        READY:"success", SERVED:"secondary",
+        PAID:"dark", REJECTED:"danger"
+    };
+
+    function majBadge(data) {
+        const badge = document.getElementById("badge-statut");
+        if (labels[data.statut]) {
+            badge.textContent = labels[data.statut];
+            badge.className = "badge statut-badge bg-" + colors[data.statut];
+            if (data.statut === "READY") badge.classList.add("pulse-success");
+            else badge.classList.remove("pulse-success");
+        }
+    }
+
+    ["ORDER_ACCEPTED", "ORDER_REJECTED", "ORDER_PREPARING",
+     "ORDER_READY", "ORDER_SERVED"].forEach(evt => {
+        socket.on(evt, (data) => {
+            if (data.id !== orderId) return;
+            majBadge(data);
+
+            // Retour visuel + sonore
+            if (evt === "ORDER_READY") {
+                jouerSon("pret"); vibrer("pret");
+                document.getElementById("zone-alerte").innerHTML =
+                    '<div class="alert alert-success text-center">🟢 Votre commande est prête !</div>';
+            } else if (evt === "ORDER_REJECTED") {
+                jouerSon("info"); vibrer("info");
+                location.reload();
+            } else if (evt === "ORDER_ACCEPTED") {
+                document.getElementById("zone-alerte").innerHTML =
+                    '<div class="alert alert-success text-center">✅ Commande acceptée</div>';
+            } else if (evt === "ORDER_PREPARING") {
+                document.getElementById("zone-alerte").innerHTML =
+                    '<div class="alert alert-info text-center">👨‍🍳 En préparation…</div>';
+            } else if (evt === "ORDER_SERVED") {
+                document.getElementById("zone-alerte").innerHTML =
+                    '<div class="alert alert-secondary text-center">🍽️ Servie. Bon appétit !</div>';
+            }
+        });
+    });
+
+    // 🛡️ Filet de sécurité : si le WebSocket tombe, on rafraîchit la page
+    // toutes les 30 secondes pour vérifier le statut.
+    setInterval(() => {
+        if (!socket.connected) location.reload();
+    }, 30000);
+</script>
+</body>
+</html>

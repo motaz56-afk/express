@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Connexion — EXPRESS{% endblock %}
+
+{% block content %}
+<style>
+    main.container { padding: 0 !important; }
+    body { background: #0f0f12 !important; }
+    nav, footer { display: none !important; }
+</style>
+
+<div class="login-page">
+    <div class="login-card">
+        <h1>EXPRESS</h1>
+        <div class="subtitle">L'excellence à votre table</div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label fw-600">Nom d'utilisateur</label>
+                <input type="text" class="form-control" id="username"
+                       name="username" required autofocus autocomplete="username">
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label fw-600">Mot de passe</label>
+                <input type="password" class="form-control" id="password"
+                       name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-or w-100"
+                    style="padding:0.85rem;font-size:1rem;letter-spacing:0.1em;">
+                SE CONNECTER
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

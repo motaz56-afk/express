@@ -1,0 +1,38 @@
+{# Zone caissier — rechargée en direct #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="stat-card stat-succes">
+            <div class="stat-value">{{ '%.3f'|format(ca_jour) }}</div>
+            <div class="stat-label">CA du jour (DT)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="stat-card stat-or">
+            <div class="stat-value">{{ nb_paiements }}</div>
+            <div class="stat-label">Paiements encaissés</div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3">Tables à encaisser</h5>
+<div class="row g-3">
+{% for t in tables %}
+    {% set info = a_encaisser.get(t.id) %}
+    {% if info %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{{ url_for('caissier.table_detail', table_id=t.id) }}"
+               class="table-card a-encaisser">
+                <div style="font-size:2rem;">💵</div>
+                <div class="table-numero">{{ t.numero }}</div>
+                <div class="table-meta">{{ info.nb }} commande(s)</div>
+                <div class="mt-2"><strong>{{ '%.3f'|format(info.total) }} DT</strong></div>
+            </a>
+        </div>
+    {% endif %}
+{% endfor %}
+{% if not a_encaisser %}
+    <div class="col-12">
+        <div class="alert alert-info">Aucune table à encaisser pour le moment.</div>
+    </div>
+{% endif %}
+</div>

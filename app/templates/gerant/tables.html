@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Tables — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🪑 Tables</h2>
+{% include "gerant/_nav.html" %}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-luxe">
+            <div class="card-header">Liste ({{ tables|length }})</div>
+            <div class="table-responsive">
+                <table class="table-luxe mb-0">
+                    <thead>
+                        <tr>
+                            <th>Numéro</th>
+                            <th style="width:100px">Places</th>
+                            <th style="width:80px">QR</th>
+                            <th style="width:200px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for t in tables %}
+                        <tr>
+                            <form method="POST"
+                                  action="{{ url_for('gerant.table_modifier', tid=t.id) }}">
+                                <td><input type="text" name="numero" value="{{ t.numero }}"
+                                           class="form-control form-control-sm"></td>
+                                <td><input type="number" name="places" value="{{ t.places }}"
+                                           class="form-control form-control-sm" min="1"></td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="qr_actif"
+                                           {% if t.qr_actif %}checked{% endif %}>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">💾</button>
+                            </form>
+                                    <a href="{{ url_for('gerant.table_qr', tid=t.id) }}"
+                                       class="btn btn-sm btn-outline-dark">📱 QR</a>
+                                    <form method="POST"
+                                          action="{{ url_for('gerant.table_supprimer', tid=t.id) }}"
+                                          onsubmit="return confirm('Supprimer cette table ?');"
+                                          class="d-inline">
+                                        <button class="btn btn-sm btn-outline-danger">🗑️</button>
+                                    </form>
+                                </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-muted text-center py-3">Aucune table.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-luxe">
+            <div class="card-header">➕ Nouvelle table</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('gerant.table_nouvelle') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Numéro / Nom</label>
+                        <input type="text" name="numero" class="form-control" required
+                               placeholder="07 ou Terrasse 2">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Places</label>
+                        <input type="number" name="places" value="4" min="1"
+                               class="form-control">
+                    </div>
+                    <button class="btn btn-primary w-100">Créer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{# Commandes en cours sur la table #}
+{% if commandes %}
+<div class="card-luxe mb-4" style="border:2px solid var(--info);">
+    <div class="card-header" style="background:var(--info);color:#fff;">
+        ⏳ Commandes en cours sur cette table
+    </div>
+    <ul class="list-group list-group-flush">
+        {% for c in commandes %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Commande #{{ c.id }}</strong>
+                <span class="badge bg-{{ OrderStatus.COLORS[c.statut] }} ms-2">
+                    {{ OrderStatus.LABELS[c.statut] }}
+                </span><br>
+                <small class="text-muted">
+                    {{ c.items|length }} article(s) — {{ '%.3f'|format(c.total) }} DT
+                </small>
+            </div>
+            <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-dark"
+               title="Imprimer le ticket">🖨️</a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}

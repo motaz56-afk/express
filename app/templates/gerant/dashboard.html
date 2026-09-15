@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📊 Dashboard Gérant</h2>
+{% include "gerant/_nav.html" %}
+
+<div id="zone-dashboard"
+     hx-get="{{ url_for('gerant.partial_dashboard') }}"
+     hx-trigger="every 20s, refresh"
+     hx-swap="innerHTML">
+    {% include "gerant/_dashboard_zone.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    ["NEW_ORDER", "NEW_QR_ORDER", "ORDER_READY", "ORDER_SERVED",
+     "PAYMENT_COMPLETED", "ORDER_ACCEPTED", "ORDER_REJECTED"].forEach(evt => {
+        socket.on(evt, () => rafraichirZone("#zone-dashboard"));
+    });
+</script>
+{% endblock %}

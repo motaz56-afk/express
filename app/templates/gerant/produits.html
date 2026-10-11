@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Produits — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🍽️ Produits</h2>
+{% include "gerant/_nav.html" %}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-luxe">
+            <div class="card-header">Liste ({{ produits|length }})</div>
+            <div class="table-responsive">
+                <table class="table-luxe mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th style="width:110px">Prix</th>
+                            <th style="width:170px">Catégorie</th>
+                            <th style="width:90px">Dispo</th>
+                            <th style="width:110px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for p in produits %}
+                        <tr>
+                            <form method="POST"
+                                  action="{{ url_for('gerant.produit_modifier', pid=p.id) }}">
+                                <td><input type="text" name="nom" value="{{ p.nom }}"
+                                           class="form-control form-control-sm"></td>
+                                <td><input type="text" name="prix"
+                                           value="{{ '%.2f'|format(p.prix) }}"
+                                           class="form-control form-control-sm"></td>
+                                <td>
+                                    <select name="category_id" class="form-select form-select-sm">
+                                        {% for c in categories %}
+                                            <option value="{{ c.id }}"
+                                                {% if c.id == p.category_id %}selected{% endif %}>
+                                                {{ c.emoji or '' }} {{ c.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="disponible"
+                                           {% if p.disponible %}checked{% endif %}>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">💾</button>
+                            </form>
+                                    <form method="POST"
+                                          action="{{ url_for('gerant.produit_supprimer', pid=p.id) }}"
+                                          onsubmit="return confirm('Supprimer ce produit ?');"
+                                          class="d-inline">
+                                        <button class="btn btn-sm btn-outline-danger">🗑️</button>
+                                    </form>
+                                </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-muted text-center py-3">Aucun produit.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-luxe">
+            <div class="card-header">➕ Nouveau produit</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('gerant.produit_nouveau') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prix (DT)</label>
+                        <input type="text" name="prix" class="form-control" required placeholder="2.50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select name="category_id" class="form-select" required>
+                            {% for c in categories %}
+                                <option value="{{ c.id }}">{{ c.emoji or '' }} {{ c.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description (optionnelle)</label>
+                        <input type="text" name="description" class="form-control">
+                    </div>
+                    <button class="btn btn-primary w-100">Créer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

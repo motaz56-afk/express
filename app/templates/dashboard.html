@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <h2>👋 Bonjour {{ current_user.prenom }} {{ current_user.nom }}</h2>
+        <p class="text-muted mb-3">
+            Rôle : <span class="badge bg-primary">{{ current_user.role }}</span>
+            &nbsp;|&nbsp;
+            Restaurant : <strong>{{ current_user.restaurant.nom }}</strong>
+        </p>
+
+        {% if current_user.role == "GERANT" %}
+            <a href="{{ url_for('gerant.dashboard') }}" class="btn btn-primary">Gérant</a>
+            <a href="{{ url_for('serveur.tables') }}" class="btn btn-outline-primary">Serveur</a>
+            <a href="{{ url_for('cuisine.index') }}" class="btn btn-outline-warning">Cuisine</a>
+            <a href="{{ url_for('caissier.index') }}" class="btn btn-outline-success">Caissier</a>
+        {% elif current_user.role == "SERVEUR" %}
+            <a href="{{ url_for('serveur.tables') }}" class="btn btn-primary">Espace Serveur →</a>
+        {% elif current_user.role == "CUISINE" %}
+            <a href="{{ url_for('cuisine.index') }}" class="btn btn-warning">Espace Cuisine →</a>
+        {% elif current_user.role == "CAISSIER" %}
+            <a href="{{ url_for('caissier.index') }}" class="btn btn-success">Espace Caissier →</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Cuisine — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">👨‍🍳 Espace Cuisine</h2>
+
+<div id="zone-cuisine"
+     hx-get="{{ url_for('cuisine.partial_zone') }}"
+     hx-trigger="every 15s, refresh"
+     hx-swap="innerHTML">
+    {% include "cuisine/_zone.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    ["NEW_ORDER", "NEW_QR_ORDER", "ORDER_SERVED"].forEach(evt => {
+        socket.on(evt, (data) => {
+            const couleur = (evt === "ORDER_SERVED") ? "secondary" : "warning";
+            const titre =
+                (evt === "NEW_QR_ORDER") ? "🔔 COMMANDE CLIENT (QR)" :
+                (evt === "NEW_ORDER")    ? "🔔 NOUVELLE COMMANDE" :
+                                            "🍽️ Commande servie";
+            afficherNotification(
+                titre + "<br>Table " + data.table_numero + " — #" + data.id,
+                couleur
+            );
+            rafraichirZone("#zone-cuisine");
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs — EXPRESS{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">👥 Utilisateurs</h2>
+{% include "gerant/_nav.html" %}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-luxe">
+            <div class="card-header">Liste ({{ utilisateurs|length }})</div>
+            <div class="table-responsive">
+                <table class="table-luxe mb-0">
+                    <thead>
+                        <tr>
+                            <th>Prénom</th>
+                            <th>Nom</th>
+                            <th>Username</th>
+                            <th style="width:130px">Rôle</th>
+                            <th style="width:80px">Actif</th>
+                            <th style="width:200px">Nouveau mdp</th>
+                            <th style="width:80px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for u in utilisateurs %}
+                        <tr>
+                            <form method="POST"
+                                  action="{{ url_for('gerant.utilisateur_modifier', uid=u.id) }}">
+                                <td><input type="text" name="prenom" value="{{ u.prenom }}"
+                                           class="form-control form-control-sm"></td>
+                                <td><input type="text" name="nom" value="{{ u.nom }}"
+                                           class="form-control form-control-sm"></td>
+                                <td><code class="small">{{ u.username }}</code></td>
+                                <td>
+                                    <select name="role" class="form-select form-select-sm">
+                                        {% for r in ['GERANT','SERVEUR','CUISINE','CAISSIER'] %}
+                                            <option value="{{ r }}"
+                                                {% if u.role == r %}selected{% endif %}>{{ r }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="actif"
+                                           {% if u.actif %}checked{% endif %}
+                                           {% if u.id == current_user.id %}disabled{% endif %}>
+                                </td>
+                                <td><input type="password" name="password"
+                                           class="form-control form-control-sm"
+                                           placeholder="laisser vide"></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">💾</button>
+                            </form>
+                                </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" class="text-muted text-center py-3">Aucun utilisateur.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-luxe">
+            <div class="card-header">➕ Nouvel utilisateur</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('gerant.utilisateur_nouveau') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" name="prenom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rôle</label>
+                        <select name="role" class="form-select">
+                            <option value="SERVEUR">SERVEUR</option>
+                            <option value="CUISINE">CUISINE</option>
+                            <option value="CAISSIER">CAISSIER</option>
+                            <option value="GERANT">GERANT</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-100">Créer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

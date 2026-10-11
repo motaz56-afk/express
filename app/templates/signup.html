@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f12">
+    <title>Créer un compte — EXPRESS</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
+
+    <style>
+        :root {
+            --or: #c8a86b;
+            --or-clair: #e0c896;
+            --or-fonce: #a88a4d;
+            --noir: #0f0f12;
+            --noir-doux: #1a1a20;
+            --creme: #faf7f2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--noir);
+            color: var(--creme);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle,
+                rgba(200, 168, 107, 0.12) 0%,
+                transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none;
+        }
+
+        .signup-wrap {
+            max-width: 560px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .signup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .signup-header .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--or);
+            letter-spacing: 0.25em;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .signup-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--creme);
+            margin: 0.5rem 0;
+        }
+
+        .signup-header p {
+            color: rgba(250, 247, 242, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .signup-card {
+            background: var(--creme);
+            color: #1a1a1a;
+            border-radius: 16px;
+            padding: 2rem;
+            border-top: 4px solid var(--or);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--or-fonce);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin: 1.25rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(200, 168, 107, 0.2);
+        }
+
+        .section-title:first-of-type { margin-top: 0; }
+
+        .form-label {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control {
+            border: 1.5px solid #e8e5df;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--or);
+            box-shadow: 0 0 0 3px rgba(200, 168, 107, 0.15);
+            outline: none;
+        }
+
+        .form-text {
+            color: #6b6b6b;
+            font-size: 0.75rem;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            border: none;
+            padding: 0.9rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            width: 100%;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(200, 168, 107, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .alert-danger {
+            background: #fdf0ef;
+            color: #c0392b;
+            border-left: 4px solid #c0392b;
+        }
+
+        .alert-warning {
+            background: #fffaf0;
+            color: #a67c1f;
+            border-left: 4px solid #e8a838;
+        }
+
+        .alert-success {
+            background: #f0faf4;
+            color: #2d8f5c;
+            border-left: 4px solid #2d8f5c;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: rgba(250, 247, 242, 0.6);
+            font-size: 0.85rem;
+        }
+
+        .login-link a {
+            color: var(--or);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            color: var(--or-clair);
+        }
+    </style>
+</head>
+<body>
+
+<div class="signup-wrap">
+
+    <div class="signup-header">
+        <a href="/" class="logo">EXPRESS</a>
+        <h1>Créer votre restaurant</h1>
+        <p>30 secondes. Aucune carte bancaire.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="signup-card">
+        <form method="POST" action="/signup" autocomplete="off">
+
+            <div class="section-title">🏢 Votre établissement</div>
+
+            <div class="mb-3">
+                <label class="form-label">Nom du restaurant / café *</label>
+                <input type="text" name="resto_nom" class="form-control"
+                       value="{{ form.resto_nom or '' }}" required maxlength="120"
+                       placeholder="Café de la Paix">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Adresse</label>
+                <input type="text" name="resto_adresse" class="form-control"
+                       value="{{ form.resto_adresse or '' }}" maxlength="255"
+                       placeholder="12 Avenue Habib Bourguiba, Tunis">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="resto_tel" class="form-control"
+                       value="{{ form.resto_tel or '' }}" maxlength="30"
+                       placeholder="+216 71 000 000">
+            </div>
+
+            <div class="section-title">👤 Votre compte gérant</div>
+
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label">Prénom *</label>
+                    <input type="text" name="prenom" class="form-control"
+                           value="{{ form.prenom or '' }}" required maxlength="60">
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" name="nom" class="form-control"
+                           value="{{ form.nom or '' }}" required maxlength="60">
+                </div>
+            </div>
+
+            <div class="mt-3 mb-3">
+                <label class="form-label">Nom d'utilisateur *</label>
+                <input type="text" name="username" class="form-control"
+                       value="{{ form.username or '' }}" required minlength="3"
+                       maxlength="60" pattern="[a-z0-9_.\-]+"
+                       placeholder="ex: motaz">
+                <div class="form-text">
+                    Lettres minuscules, chiffres, points, tirets et underscores uniquement.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mot de passe *</label>
+                <input type="password" name="password" class="form-control"
+                       required minlength="6" placeholder="6 caractères minimum">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Confirmer le mot de passe *</label>
+                <input type="password" name="password2" class="form-control"
+                       required minlength="6">
+            </div>
+
+            <button type="submit" class="btn-submit">
+                CRÉER MON RESTAURANT →
+            </button>
+
+        </form>
+    </div>
+
+    <div class="login-link">
+        Vous avez déjà un compte ?
+        <a href="/login">Se connecter</a>
+    </div>
+
+</div>
+
+</body>
+</html>

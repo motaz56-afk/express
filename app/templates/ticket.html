@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ commande.id }} — {{ resto.nom }}</title>
+    <style>
+        /* =========================================================
+           TICKET — Format 80mm pour imprimante thermique
+           ========================================================= */
+        @page {
+            size: 80mm auto;
+            margin: 2mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            background: #f5f5f5;
+            font-family: 'Courier New', 'Lucida Console', monospace;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .ticket {
+            width: 76mm;
+            background: #fff;
+            margin: 20px auto;
+            padding: 4mm 3mm;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .ticket .centre { text-align: center; }
+        .ticket .gras { font-weight: bold; }
+        .ticket .grand { font-size: 16px; }
+        .ticket .tres-grand { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+        .ticket .petit { font-size: 10px; }
+        .ticket .sep {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+        }
+        .ticket .sep-plein {
+            border: none;
+            border-top: 2px solid #000;
+            margin: 5px 0;
+        }
+        .ticket table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .ticket table td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+        .ticket .item-nom {
+            word-wrap: break-word;
+            max-width: 42mm;
+        }
+        .ticket .item-prix {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .ticket .total-ligne {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        /* Barre d'actions (invisible à l'impression) */
+        .actions {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .actions button,
+        .actions a {
+            background: #0f0f12;
+            color: #c8a86b;
+            border: 1px solid #c8a86b;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-family: -apple-system, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .actions button:hover,
+        .actions a:hover {
+            background: #c8a86b;
+            color: #0f0f12;
+        }
+
+        @media print {
+            html, body {
+                background: #fff !important;
+            }
+            .actions { display: none !important; }
+            .ticket {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Barre d'actions (n'apparaît pas à l'impression) -->
+<div class="actions">
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <button onclick="window.close()">✕ Fermer</button>
+</div>
+
+<div class="ticket">
+
+    <!-- EN-TÊTE -->
+    <div class="centre">
+        <div class="tres-grand">{{ resto.nom }}</div>
+        {% if resto.adresse %}
+            <div class="petit">{{ resto.adresse }}</div>
+        {% endif %}
+        {% if resto.telephone %}
+            <div class="petit">Tél : {{ resto.telephone }}</div>
+        {% endif %}
+    </div>
+
+    <hr class="sep-plein">
+
+    <!-- INFOS COMMANDE -->
+    <table>
+        <tr>
+            <td class="gras">Commande</td>
+            <td class="item-prix gras">#{{ commande.id }}</td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td class="item-prix">{{ commande.cree_le.strftime('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        <tr>
+            <td class="gras">Table</td>
+            <td class="item-prix gras">{{ commande.table.numero }}</td>
+        </tr>
+        <tr>
+            <td>Source</td>
+            <td class="item-prix">{{ source_label }}</td>
+        </tr>
+        {% if commande.source != "QR_CODE" %}
+        <tr>
+            <td>Serveur</td>
+            <td class="item-prix">{{ serveur_nom }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>Statut</td>
+            <td class="item-prix">{{ OrderStatus.LABELS[commande.statut].replace('🕐','').replace('⏳','').replace('✅','').replace('👨‍🍳','').replace('🟢','').replace('🍽️','').replace('💰','').replace('❌','').strip() }}</td>
+        </tr>
+    </table>
+
+    <hr class="sep">
+
+    <!-- ARTICLES -->
+    <table>
+        {% for item in commande.items %}
+        <tr>
+            <td class="item-nom">
+                <span class="gras">{{ item.quantite }}×</span> {{ item.nom_produit }}
+            </td>
+            <td class="item-prix">{{ '%.2f'|format(item.sous_total()) }} DT</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <hr class="sep">
+
+    <!-- TOTAL -->
+    <table>
+        <tr class="total-ligne">
+            <td>TOTAL</td>
+            <td class="item-prix">{{ '%.3f'|format(commande.total) }} DT</td>
+        </tr>
+    </table>
+
+    {% if commande.note %}
+    <hr class="sep">
+    <div class="petit">
+        <span class="gras">NOTE :</span> {{ commande.note }}
+    </div>
+    {% endif %}
+
+    <hr class="sep-plein">
+
+    <!-- PIED DE PAGE -->
+    <div class="centre petit">
+        <div>Merci de votre visite !</div>
+        <div style="margin-top:4px;">
+            Imprimé le {{ commande.cree_le.strftime('%d/%m/%Y à %H:%M') }}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Ouvre automatiquement la boîte d'impression au chargement
+    window.addEventListener("load", () => {
+        // Petit délai pour laisser la page se rendre complètement
+        setTimeout(() => window.print(), 300);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{# Liste des commandes actives #}
+{% if not commandes %}
+    <div class="alert alert-info">Aucune commande active.</div>
+{% endif %}
+
+<div class="row g-3">
+{% for c in commandes %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card-luxe">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>#{{ c.id }} — Table {{ c.table.numero }}</strong>
+                <span class="badge bg-{{ OrderStatus.COLORS[c.statut] }}">
+                    {{ OrderStatus.LABELS[c.statut] }}
+                </span>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for item in c.items %}
+                <li class="list-group-item d-flex justify-content-between py-1">
+                    <span>{{ item.quantite }} × {{ item.nom_produit }}</span>
+                    <small>{{ '%.2f'|format(item.sous_total()) }} DT</small>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total</strong>
+                    <strong class="text-success">{{ '%.3f'|format(c.total) }} DT</strong>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if c.statut == OrderStatus.READY %}
+                        <form method="POST"
+                              action="{{ url_for('serveur.marquer_servie', order_id=c.id) }}"
+                              class="flex-fill">
+                            <button class="btn btn-success w-100">🍽️ Servie</button>
+                        </form>
+                    {% elif c.statut == OrderStatus.SERVED %}
+                        <div class="text-muted small text-center flex-fill">
+                            En attente de paiement
+                        </div>
+                    {% else %}
+                        <div class="text-muted small text-center flex-fill">
+                            En cours…
+                        </div>
+                    {% endif %}
+                    <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                       target="_blank"
+                       class="btn btn-outline-dark"
+                       title="Imprimer le ticket">🖨️</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>

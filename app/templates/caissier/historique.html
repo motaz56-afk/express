@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Historique — EXPRESS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="mb-0">📜 Historique du jour</h2>
+    <a href="{{ url_for('caissier.index') }}" class="btn btn-noir btn-sm">← Retour</a>
+</div>
+
+<div id="zone-historique"
+     hx-get="{{ url_for('caissier.partial_historique') }}"
+     hx-trigger="every 20s, refresh"
+     hx-swap="innerHTML">
+    {% include "caissier/_historique_liste.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    socket.on("PAYMENT_COMPLETED", () => {
+        setTimeout(() => rafraichirZone("#zone-historique"), 500);
+    });
+</script>
+{% endblock %}

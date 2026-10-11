@@ -1,0 +1,30 @@
+{# Liste des commandes à encaisser pour une table #}
+<div class="card-luxe">
+    <div class="card-header">Commandes à encaisser</div>
+    <ul class="list-group list-group-flush">
+    {% for c in commandes %}
+        <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Commande #{{ c.id }}</strong>
+                    <span class="ms-2">{{ '%.3f'|format(c.total) }} DT</span>
+                </div>
+                <a href="{{ url_for('tickets.imprimer', order_id=c.id) }}"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-dark"
+                   title="Imprimer le ticket">🖨️</a>
+            </div>
+            <ul class="list-unstyled mb-0 small text-muted">
+                {% for it in c.items %}
+                <li>{{ it.quantite }} × {{ it.nom_produit }}
+                    — {{ '%.2f'|format(it.sous_total()) }} DT</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% else %}
+        <li class="list-group-item text-muted text-center py-3">
+            Aucune commande à encaisser.
+        </li>
+    {% endfor %}
+    </ul>
+</div>

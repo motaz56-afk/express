@@ -1,0 +1,52 @@
+{# Panier serveur pour une table #}
+<div class="card-luxe">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>🛒 Panier</span>
+        {% if panier %}
+            <form method="POST"
+                  action="{{ url_for('serveur.vider', table_id=table.id) }}"
+                  onsubmit="return confirm('Vider le panier ?');">
+                <button class="btn btn-sm btn-outline-light">Vider</button>
+            </form>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if panier %}
+            <ul class="list-group list-group-flush mb-3">
+            {% for item in panier %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <div>
+                        <strong>{{ item.nom }}</strong><br>
+                        <small class="text-muted">
+                            {{ '%.2f'|format(item.prix) }} DT × {{ item.quantite }}
+                            = {{ '%.2f'|format(item.sous_total) }} DT
+                        </small>
+                    </div>
+                    <form method="POST"
+                          action="{{ url_for('serveur.retirer', table_id=table.id) }}">
+                        <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                        <button class="btn btn-sm btn-outline-danger">−</button>
+                    </form>
+                </li>
+            {% endfor %}
+            </ul>
+
+            <div class="d-flex justify-content-between mb-3">
+                <strong>Total</strong>
+                <strong>{{ '%.2f'|format(total) }} DT</strong>
+            </div>
+
+            <form method="POST"
+                  action="{{ url_for('serveur.valider', table_id=table.id) }}">
+                <button class="btn btn-success w-100 btn-lg">
+                    ✅ Envoyer en cuisine
+                </button>
+            </form>
+        {% else %}
+            <p class="text-muted text-center mb-0">
+                Panier vide.<br>
+                <small>Touchez un produit à gauche pour l'ajouter.</small>
+            </p>
+        {% endif %}
+    </div>
+</div>

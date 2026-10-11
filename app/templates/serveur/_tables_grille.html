@@ -1,0 +1,22 @@
+{# Grille des tables — rechargée en direct #}
+<div class="row g-3">
+{% for t in tables %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <a href="{{ url_for('serveur.table_detail', table_id=t.id) }}"
+           class="table-card {% if paniers.get(t.id) %}occupee{% endif %}">
+            <div style="font-size:2rem;">🪑</div>
+            <div class="table-numero">{{ t.numero }}</div>
+            <div class="table-meta">{{ t.places }} places</div>
+            {% if paniers.get(t.id) %}
+                <div class="badge-luxe bg-warning text-dark mt-2 d-inline-block">
+                    ⏳ {{ paniers[t.id] }} en cours
+                </div>
+            {% endif %}
+        </a>
+    </div>
+{% else %}
+    <div class="col-12">
+        <div class="alert alert-info">Aucune table.</div>
+    </div>
+{% endfor %}
+</div>

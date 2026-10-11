@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Table {{ table.numero }} — EXPRESS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">🪑 Table {{ table.numero }}</h2>
+    <div>
+        <a href="{{ url_for('serveur.commandes') }}" class="btn btn-noir btn-sm">📋 Suivi</a>
+        <a href="{{ url_for('serveur.tables') }}" class="btn btn-outline-secondary btn-sm">← Tables</a>
+    </div>
+</div>
+
+<div id="zone-commandes-table"
+     hx-get="{{ url_for('serveur.partial_commandes_table', table_id=table.id) }}"
+     hx-trigger="every 15s, refresh"
+     hx-swap="innerHTML">
+    {% include "serveur/_commandes_table.html" %}
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card-luxe">
+            <div class="card-header">📖 Menu</div>
+            <div class="card-body">
+                {% set categories = table.restaurant.categories %}
+                {% for c in categories|sort(attribute='ordre') %}
+                    {% set produits = c.products|selectattr('disponible')|list %}
+                    {% if produits %}
+                        <h6 class="mt-3 mb-2">{{ c.emoji or '' }} {{ c.nom }}</h6>
+                        <div class="row g-2 mb-3">
+                        {% for p in produits|sort(attribute='nom') %}
+                            <div class="col-6">
+                                <form method="POST"
+                                      action="{{ url_for('serveur.ajouter', table_id=table.id) }}">
+                                    <input type="hidden" name="product_id" value="{{ p.id }}">
+                                    <button type="submit" class="produit-btn">
+                                        <span class="produit-nom">{{ p.nom }}</span>
+                                        <span class="produit-prix">{{ '%.2f'|format(p.prix) }} DT</span>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div id="zone-panier" class="sticky-top" style="top:1rem;">
+            {% include "serveur/_panier.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    ["ORDER_READY", "ORDER_PREPARING", "NEW_ORDER", "ORDER_SERVED",
+     "NEW_QR_ORDER"].forEach(evt => {
+        socket.on(evt, () => {
+            rafraichirZone("#zone-commandes-table");
+        });
+    });
+</script>
+{% endblock %}

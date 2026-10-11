@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Serveur — EXPRESS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="mb-0">🍽️ Espace Serveur</h2>
+    <a href="{{ url_for('serveur.commandes') }}" class="btn btn-noir">
+        📋 Suivi des commandes
+    </a>
+</div>
+
+<div id="zone-tables"
+     hx-get="{{ url_for('serveur.partial_tables') }}"
+     hx-trigger="every 20s, refresh"
+     hx-swap="innerHTML">
+    {% include "serveur/_tables_grille.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    ["ORDER_READY", "ORDER_PREPARING", "NEW_ORDER", "ORDER_SERVED",
+     "NEW_QR_ORDER"].forEach(evt => {
+        socket.on(evt, () => rafraichirZone("#zone-tables"));
+    });
+</script>
+{% endblock %}

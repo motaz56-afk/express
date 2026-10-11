@@ -1,45 +1,34 @@
 import os
-from pathlib import Path
 
-# Charge le .env UNIQUEMENT en local (pas sur Render)
-if not os.environ.get("RENDER"):
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ImportError:
-        pass
 
-from app import create_app, socketio
+class Config:
+    """Configuration principale de l'application."""
+    SECRET_KEY = os.environ.get("SECRET_KEY", "change-moi-en-production-12345")
 
-app = create_app()
+    # Récupère DATABASE_URL et corrige automatiquement le préfixe
+    _db_url = os.environ.get("DATABASE_URL", "sqlite:///moncafe.db")
+    # SQLAlchemy 2.0 exige "postgresql://" et refuse "postgres://"
+    if _db_url.startswith("postgres://"):
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
 
-if __name__ == "__main__":
-    # Init local : si la base SQLite n'existe pas, on la crée
-    db_path = Path("instance") / "moncafe.db"
-    if not db_path.exists() and not os.environ.get("DATABASE_URL"):
-        print("[local] Base absente. Initialisation...")
-        from app import db
-        from app.models import Restaurant, User
-        with app.app_context():
-            db.create_all()
-            if not Restaurant.query.first():
-                resto = Restaurant(nom="EXPRESS", adresse="", telephone="")
-                resto.initialiser_abonnement(mois=8)
-                db.session.add(resto)
-                db.session.flush()
-                u = User(prenom="Gérant", nom="Principal",
-                         username="admin", role="GERANT",
-                         restaurant_id=resto.id)
-                u.set_password("admin123")
-                db.session.add(u)
-                db.session.commit()
-                print("[local] Base créée (admin / admin123)")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    debug_mode = os.environ.get("FLASK_DEBUG", "1") == "1"
-    if debug_mode:
-        socketio.run(app, debug=True, use_reloader=False,
-                     host="0.0.0.0", port=5000,
-                     allow_unsafe_werkzeug=True)
-    else:
-        port = int(os.environ.get("PORT", 5000))
-        socketio.run(app, host="0.0.0.0", port=port)
+    BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:5000")
+
+    # Google AdSense
+    ADSENSE_CLIENT_ID = os.environ.get("ADSENSE_CLIENT_ID", "")
+    ADSENSE_ENABLED = os.environ.get("ADSENSE_ENABLED", "0") == "1"
+
+    # Sécurité
+    WTF_CSRF_ENABLED = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "0") == "1"
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+
+    from datetime import timedelta
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=60)
+
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024

@@ -1,47 +1,407 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ lang_code }}" dir="{{ lang.direction }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ resto.nom }} — Table {{ table.numero }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f12">
+    <title>{{ resto.nom }} — {{ lang.table }} {{ table.numero }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        body { background-color: #f7f7f9; padding-bottom: 90px; }
-        .entete { background: #212529; color: white; padding: 1rem; text-align: center; }
-        .produit-btn { text-align: left; }
+        :root {
+            --or: #c8a86b;
+            --or-clair: #e0c896;
+            --or-fonce: #a88a4d;
+            --noir: #0f0f12;
+            --noir-doux: #1a1a20;
+            --creme: #faf7f2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            background: var(--noir);
+            color: var(--creme);
+            min-height: 100vh;
+            padding-bottom: 110px;
+            overflow-x: hidden;
+        }
+
+        [dir="rtl"] body { font-family: 'Cairo', 'Inter', sans-serif; }
+
+        /* ==================== EN-TÊTE ==================== */
+        .entete {
+            background: linear-gradient(135deg, var(--noir) 0%, var(--noir-doux) 100%);
+            padding: 1.25rem 1rem 1rem;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, transparent, var(--or), transparent) 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entete::before {
+            content: "";
+            position: absolute;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(200, 168, 107, 0.15) 0%, transparent 70%);
+            top: -150px; left: 50%;
+            transform: translateX(-50%);
+            animation: pulse 4s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+        }
+
+        .entete .logo-nom {
+            font-family: 'Playfair Display', 'Cairo', serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--or);
+            letter-spacing: 0.15em;
+            text-shadow: 0 2px 20px rgba(200, 168, 107, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+
+        [dir="rtl"] .entete .logo-nom { letter-spacing: 0; }
+
+        .entete .bienvenue {
+            font-size: 0.7rem;
+            color: rgba(250, 247, 242, 0.6);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        [dir="rtl"] .entete .bienvenue { letter-spacing: 0; }
+
+        .entete .badge-table {
+            display: inline-block;
+            margin-top: 0.75rem;
+            padding: 0.4rem 1.1rem;
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.15em;
+            box-shadow: 0 4px 16px rgba(200, 168, 107, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+
+        [dir="rtl"] .entete .badge-table { letter-spacing: 0; }
+
+        /* ==================== BARRE ACTIONS (langue + partage) ==================== */
+        .barre-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(26, 26, 32, 0.6);
+            border-bottom: 1px solid rgba(200, 168, 107, 0.15);
+            gap: 0.5rem;
+        }
+
+        .selecteur-langue {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-langue {
+            background: transparent;
+            border: 1px solid rgba(200, 168, 107, 0.3);
+            color: rgba(250, 247, 242, 0.7);
+            padding: 0.35rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            text-decoration: none;
+        }
+
+        .btn-langue:hover, .btn-langue.active {
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            border-color: var(--or);
+        }
+
+        .btn-partager {
+            background: transparent;
+            border: 1px solid var(--or);
+            color: var(--or);
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .btn-partager:hover, .btn-partager:active {
+            background: var(--or);
+            color: var(--noir);
+        }
+
+        /* ==================== CATÉGORIES ==================== */
+        .categorie-titre {
+            font-family: 'Playfair Display', 'Cairo', serif;
+            font-size: 1.35rem;
+            color: var(--or);
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(200, 168, 107, 0.2);
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* ==================== CARTE PRODUIT ==================== */
+        .produit-card {
+            background: linear-gradient(180deg, rgba(26, 26, 32, 0.9) 0%, rgba(26, 26, 32, 0.6) 100%);
+            border: 1px solid rgba(200, 168, 107, 0.15);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        /* Décalage progressif pour l'effet staggered */
+        .produit-card.delay-1 { animation-delay: 0.05s; }
+        .produit-card.delay-2 { animation-delay: 0.10s; }
+        .produit-card.delay-3 { animation-delay: 0.15s; }
+        .produit-card.delay-4 { animation-delay: 0.20s; }
+        .produit-card.delay-5 { animation-delay: 0.25s; }
+        .produit-card.delay-6 { animation-delay: 0.30s; }
+        .produit-card.delay-7 { animation-delay: 0.35s; }
+        .produit-card.delay-8 { animation-delay: 0.40s; }
+        .produit-card.delay-9 { animation-delay: 0.45s; }
+        .produit-card.delay-10 { animation-delay: 0.50s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .produit-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(200, 168, 107, 0.1), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+
+        .produit-card:active::before { left: 150%; }
+
+        .produit-card:active {
+            transform: scale(0.97);
+            border-color: var(--or);
+            box-shadow: 0 0 20px rgba(200, 168, 107, 0.3);
+        }
+
+        .produit-card .nom {
+            font-weight: 600;
+            color: var(--creme);
+            font-size: 0.95rem;
+            line-height: 1.3;
+            margin-bottom: 0.35rem;
+        }
+
+        .produit-card .prix {
+            color: var(--or);
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: 'Playfair Display', 'Cairo', serif;
+        }
+
+        .produit-card .btn-plus {
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            border: none;
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(200, 168, 107, 0.3);
+            transition: all 0.2s;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        [dir="rtl"] .produit-card .btn-plus { margin-left: 0; margin-right: auto; }
+
+        .produit-card .btn-plus:active { transform: scale(0.9); }
+
+        /* ==================== PANIER FLOTTANT ==================== */
+        .panier-fixe {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, var(--noir) 0%, var(--noir-doux) 100%);
+            padding: 1rem 1.25rem;
+            border-top: 2px solid var(--or);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .panier-fixe .nb { font-size: 0.85rem; color: rgba(250, 247, 242, 0.7); }
+        .panier-fixe .total {
+            font-family: 'Playfair Display', 'Cairo', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--or);
+        }
+
+        .panier-fixe .btn-voir {
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            box-shadow: 0 4px 16px rgba(200, 168, 107, 0.4);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .panier-fixe .btn-voir:active { transform: scale(0.95); }
+
+        .alert {
+            border: none;
+            border-left: 4px solid var(--or);
+            background: rgba(200, 168, 107, 0.1);
+            color: var(--creme);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        [dir="rtl"] .alert { border-left: none; border-right: 4px solid var(--or); }
+
+        /* Toast pour confirmation partage */
+        .toast-copie {
+            position: fixed;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            color: var(--noir);
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 24px rgba(200, 168, 107, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 200;
+        }
+
+        .toast-copie.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
 
+<!-- ==================== EN-TÊTE ==================== -->
 <div class="entete">
-    <h4 class="mb-0">☕ {{ resto.nom }}</h4>
-    <div class="small">BIENVENUE — TABLE {{ table.numero }}</div>
+    <div class="logo-nom">{{ resto.nom }}</div>
+    <div class="bienvenue">{{ lang.bienvenue }}</div>
+    <div class="badge-table">{{ lang.table }} {{ table.numero }}</div>
 </div>
 
-<div class="container py-3">
+<!-- ==================== BARRE ACTIONS ==================== -->
+<div class="barre-actions">
+    <div class="selecteur-langue">
+        {% for code, trad in langues_disponibles %}
+            <a href="{{ url_for('client_qr.menu', restaurant_id=resto.id, token=table.token, lang=code) }}"
+               class="btn-langue {% if code == lang_code %}active{% endif %}">
+                <span>{{ trad.drapeau }}</span>
+                <span class="d-none d-sm-inline">{{ trad.nom }}</span>
+                <span class="d-inline d-sm-none">{{ code|upper }}</span>
+            </a>
+        {% endfor %}
+    </div>
+    <button class="btn-partager" onclick="partagerMenu()">
+        <span>📤</span>
+        <span class="d-none d-sm-inline">{{ lang.partager }}</span>
+    </button>
+</div>
+
+<!-- ==================== MENU ==================== -->
+<div class="container py-2">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for cat, msg in messages %}
-            <div class="alert alert-{{ cat }}">{{ msg }}</div>
+            <div class="alert alert-{{ cat }} my-3">{{ msg }}</div>
         {% endfor %}
     {% endwith %}
 
     {% for c in categories %}
         {% set produits = par_cat.get(c.id, []) %}
         {% if produits %}
-            <h5 class="mt-4">{{ c.emoji or '' }} {{ c.nom }}</h5>
+            <h2 class="categorie-titre">
+                <span style="font-size:1.6rem;">{{ c.emoji or '🍽️' }}</span>
+                {{ c.nom }}
+            </h2>
             <div class="row g-2">
             {% for p in produits %}
                 <div class="col-6">
                     <form method="POST"
                           action="{{ url_for('client_qr.ajouter', restaurant_id=resto.id, token=table.token) }}">
                         <input type="hidden" name="product_id" value="{{ p.id }}">
-                        <button class="btn btn-outline-dark w-100 produit-btn">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span>{{ p.nom }}</span>
-                                <span class="badge bg-dark">+</span>
+                        <button type="submit" class="produit-card w-100 text-start delay-{{ (loop.index0 % 10) + 1 }}"
+                                style="cursor:pointer; border:none;">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <div style="flex:1;">
+                                    <div class="nom">{{ p.nom }}</div>
+                                    <div class="prix">{{ '%.2f'|format(p.prix) }} DT</div>
+                                </div>
+                                <span class="btn-plus">+</span>
                             </div>
-                            <small class="text-muted">{{ '%.2f'|format(p.prix) }} DT</small>
                         </button>
                     </form>
                 </div>
@@ -51,22 +411,48 @@
     {% endfor %}
 </div>
 
-<!-- Barre panier fixe en bas -->
+<!-- ==================== PANIER FLOTTANT ==================== -->
 {% if panier %}
-<div class="fixed-bottom bg-dark text-white p-3">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div>
-            <strong>{{ panier|length }} article(s)</strong><br>
-            <span>TOTAL : {{ '%.3f'|format(total) }} DT</span>
-        </div>
-        <a href="{{ url_for('client_qr.confirmer', restaurant_id=resto.id, token=table.token) }}"
-           class="btn btn-warning btn-lg">
-            🛒 Voir le panier
-        </a>
+<div class="panier-fixe">
+    <div class="resume">
+        <div class="nb">{{ panier|length }} {{ lang.articles }} {{ lang.dans_panier }}</div>
+        <div class="total">{{ '%.3f'|format(total) }} DT</div>
     </div>
+    <a href="{{ url_for('client_qr.confirmer', restaurant_id=resto.id, token=table.token) }}"
+       class="btn-voir">
+        {{ lang.voir }} →
+    </a>
 </div>
 {% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Toast -->
+<div class="toast-copie" id="toast-copie">{{ lang.lien_copie }}</div>
+
+<script>
+function partagerMenu() {
+    const url = window.location.origin + "{{ url_for('client_qr.menu', restaurant_id=resto.id, token=table.token) }}";
+    const titre = "{{ resto.nom }}";
+    const texte = "{{ lang.menu }} - {{ resto.nom }}";
+
+    if (navigator.share) {
+        navigator.share({
+            title: titre,
+            text: texte,
+            url: url,
+        }).catch(() => {});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+            const toast = document.getElementById("toast-copie");
+            toast.classList.add("visible");
+            setTimeout(() => toast.classList.remove("visible"), 2500);
+        }).catch(() => {
+            prompt("Copiez ce lien :", url);
+        });
+    } else {
+        prompt("Copiez ce lien :", url);
+    }
+}
+</script>
+
 </body>
 </html>

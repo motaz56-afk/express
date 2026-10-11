@@ -1,58 +1,303 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ lang_code }}" dir="{{ lang.direction }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi — Table {{ table.numero }}</title>
+    <meta name="theme-color" content="#0f0f12">
+    <title>{{ lang.suivi }} — {{ lang.table }} {{ table.numero }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        body { background:#faf7f2; font-family: 'Inter', sans-serif; }
-        .entete { background:#0f0f12; color:#c8a86b; padding:1.25rem; text-align:center; }
-        .entete h1 { font-family: 'Playfair Display', serif; font-size:1.5rem; margin:0; color:#c8a86b; }
-        .statut-badge { font-size:1.1rem; padding:0.9rem 1.5rem; border-radius:30px; font-weight:600; }
-        .pulse-success { animation: pulse 1.5s infinite; }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(45,143,92,0.6); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(45,143,92,0); }
+        :root {
+            --or: #c8a86b;
+            --or-clair: #e0c896;
+            --or-fonce: #a88a4d;
+            --noir: #0f0f12;
+            --noir-doux: #1a1a20;
+            --creme: #faf7f2;
+            --succes: #2d8f5c;
+            --danger: #c0392b;
+            --warning: #e8a838;
+            --info: #3d7fb8;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            background: var(--noir);
+            color: var(--creme);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        [dir="rtl"] body { font-family: 'Cairo', 'Inter', sans-serif; }
+
+        .entete {
+            background: linear-gradient(135deg, var(--noir) 0%, var(--noir-doux) 100%);
+            padding: 1.5rem 1rem 1.25rem;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, transparent, var(--or), transparent) 1;
+        }
+
+        .entete h1 {
+            font-family: 'Playfair Display', 'Cairo', serif;
+            color: var(--or);
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .entete .sub {
+            font-size: 0.75rem;
+            color: rgba(250, 247, 242, 0.6);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-top: 0.35rem;
+        }
+
+        [dir="rtl"] .entete .sub { letter-spacing: 0; }
+
+        .statut-wrap { text-align: center; padding: 2rem 1rem 1rem; }
+
+        .statut-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Playfair Display', 'Cairo', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 1rem 1.75rem;
+            border-radius: 40px;
+            letter-spacing: 0.05em;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s;
+        }
+
+        [dir="rtl"] .statut-badge { letter-spacing: 0; }
+
+        .statut-badge.bg-warning { background: linear-gradient(135deg, #f0b850 0%, #e8a838 100%); color: var(--noir); }
+        .statut-badge.bg-info { background: linear-gradient(135deg, #5a9ecf 0%, #3d7fb8 100%); color: #fff; }
+        .statut-badge.bg-primary { background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%); color: var(--noir); }
+        .statut-badge.bg-success { background: linear-gradient(135deg, #35a76b 0%, #2d8f5c 100%); color: #fff; }
+        .statut-badge.bg-secondary { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: #fff; }
+        .statut-badge.bg-dark { background: linear-gradient(135deg, #1a1a20 0%, #0f0f12 100%); color: var(--or); border: 1px solid var(--or); }
+        .statut-badge.bg-danger { background: linear-gradient(135deg, #d9534f 0%, #c0392b 100%); color: #fff; }
+
+        .statut-badge.pulse-vert { animation: pulseVert 1.5s infinite; }
+
+        @keyframes pulseVert {
+            0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(45, 143, 92, 0.4), 0 0 0 0 rgba(45, 143, 92, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 32px rgba(45, 143, 92, 0.6), 0 0 0 20px rgba(45, 143, 92, 0); }
+        }
+
+        .timeline {
+            background: linear-gradient(180deg, rgba(26, 26, 32, 0.9) 0%, rgba(26, 26, 32, 0.5) 100%);
+            border: 1px solid rgba(200, 168, 107, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .etape {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            opacity: 0.35;
+            transition: all 0.4s;
+        }
+
+        .etape.active, .etape.passee { opacity: 1; }
+
+        .etape .puce {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid rgba(200, 168, 107, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            background: var(--noir);
+            transition: all 0.4s;
+        }
+
+        .etape.passee .puce {
+            background: var(--succes);
+            border-color: var(--succes);
+            color: #fff;
+        }
+
+        .etape.active .puce {
+            background: linear-gradient(135deg, var(--or) 0%, var(--or-fonce) 100%);
+            border-color: var(--or);
+            color: var(--noir);
+            animation: pulsePuce 1.8s infinite;
+        }
+
+        @keyframes pulsePuce {
+            0%, 100% { box-shadow: 0 0 0 6px rgba(200, 168, 107, 0.2); }
+            50% { box-shadow: 0 0 0 12px rgba(200, 168, 107, 0); }
+        }
+
+        .etape .label { font-size: 0.9rem; font-weight: 500; color: var(--creme); }
+        .etape.active .label { font-weight: 700; color: var(--or); }
+
+        .carte-articles {
+            background: linear-gradient(180deg, rgba(26, 26, 32, 0.9) 0%, rgba(26, 26, 32, 0.5) 100%);
+            border: 1px solid rgba(200, 168, 107, 0.2);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .article-ligne {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(200, 168, 107, 0.08);
+            font-size: 0.9rem;
+        }
+
+        .article-ligne:last-child { border-bottom: none; }
+
+        .total-ligne {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.9rem;
+            margin-top: 0.4rem;
+            border-top: 2px solid var(--or);
+        }
+
+        .total-ligne .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(250, 247, 242, 0.6);
+        }
+
+        [dir="rtl"] .total-ligne .label { letter-spacing: 0; }
+
+        .total-ligne .montant {
+            font-family: 'Playfair Display', 'Cairo', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--or);
+        }
+
+        .alerte-luxe {
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        [dir="rtl"] .alerte-luxe { border-left: none; border-right: 4px solid; }
+
+        .alerte-luxe.succes { background: rgba(45, 143, 92, 0.15); border-color: var(--succes); color: #a8e6c4; }
+        .alerte-luxe.danger { background: rgba(192, 57, 43, 0.15); border-color: var(--danger); color: #f5b8b3; }
+        .alerte-luxe.info { background: rgba(61, 127, 184, 0.15); border-color: var(--info); color: #b8d4ea; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-luxe {
+            display: block;
+            text-align: center;
+            background: transparent;
+            border: 1.5px solid var(--or);
+            color: var(--or);
+            padding: 0.9rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+        }
+
+        [dir="rtl"] .btn-luxe { letter-spacing: 0; }
+
+        .btn-luxe:active { background: var(--or); color: var(--noir); }
     </style>
 </head>
 <body>
 
 <div class="entete">
-    <h1>☕ {{ resto.nom }}</h1>
-    <div style="font-size:0.85rem;opacity:0.8;">Table {{ table.numero }} — Commande #{{ commande.id }}</div>
+    <h1>{{ resto.nom }}</h1>
+    <div class="sub">{{ lang.table }} {{ table.numero }} · {{ lang.commande }} #{{ commande.id }}</div>
 </div>
 
-<div class="container py-4">
-    <div class="text-center my-4">
-        <div class="badge bg-{{ OrderStatus.COLORS[commande.statut] }} statut-badge"
+<div class="container py-3">
+
+    <div class="statut-wrap">
+        <div class="badge statut-badge bg-{{ OrderStatus.COLORS[commande.statut] }}"
              id="badge-statut">
-            {{ OrderStatus.LABELS[commande.statut] }}
+            {{ lang.statut[commande.statut] }}
         </div>
     </div>
 
     <div id="zone-alerte"></div>
 
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;">
-        <ul class="list-group list-group-flush">
-        {% for item in commande.items %}
-            <li class="list-group-item d-flex justify-content-between">
-                <span>{{ item.quantite }} × {{ item.nom_produit }}</span>
-                <span>{{ '%.2f'|format(item.sous_total()) }} DT</span>
-            </li>
+    <div class="timeline">
+        {% set etapes = [
+            ('PENDING_CONFIRMATION', '⏳'),
+            ('PENDING', '📥'),
+            ('PREPARING', '👨‍🍳'),
+            ('READY', '🟢'),
+            ('SERVED', '🍽️'),
+        ] %}
+        {% set ordre = ['PENDING_CONFIRMATION', 'PENDING', 'PREPARING', 'READY', 'SERVED'] %}
+        {% set index_actuel = ordre.index(commande.statut) if commande.statut in ordre else -1 %}
+
+        {% for statut, icone in etapes %}
+            {% set index_etape = loop.index0 %}
+            <div class="etape {% if index_etape < index_actuel %}passee{% elif index_etape == index_actuel %}active{% endif %}">
+                <div class="puce">{% if index_etape < index_actuel %}✓{% else %}{{ icone }}{% endif %}</div>
+                <div class="label">{{ lang.etapes[statut] }}</div>
+            </div>
         {% endfor %}
-        </ul>
-        <div class="card-body d-flex justify-content-between">
-            <strong>TOTAL</strong>
-            <strong>{{ '%.3f'|format(commande.total) }} DT</strong>
+
+        {% if commande.statut == 'REJECTED' %}
+            <div class="etape active" style="opacity:1;">
+                <div class="puce" style="background:var(--danger);border-color:var(--danger);color:#fff;">✕</div>
+                <div class="label" style="color:var(--danger);font-weight:700;">{{ lang.alerte_refusee }}</div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if commande.statut == "REJECTED" %}
+        <div class="alerte-luxe danger">
+            <strong>{{ lang.alerte_refusee }}</strong><br>
+            {{ commande.refus_raison }}
+        </div>
+    {% endif %}
+
+    <div class="carte-articles">
+        {% for item in commande.items %}
+            <div class="article-ligne">
+                <span>{{ item.quantite }} × {{ item.nom_produit }}</span>
+                <span style="color:rgba(250,247,242,0.7);">{{ '%.2f'|format(item.sous_total()) }} DT</span>
+            </div>
+        {% endfor %}
+        <div class="total-ligne">
+            <span class="label">{{ lang.total }}</span>
+            <span class="montant">{{ '%.3f'|format(commande.total) }} DT</span>
         </div>
     </div>
 
     <a href="{{ url_for('client_qr.menu', restaurant_id=resto.id, token=table.token) }}"
-       class="btn btn-outline-dark w-100" style="border-radius:10px;">
-        ← Commander autre chose
+       class="btn-luxe">
+        ← {{ lang.commander_autre }}
     </a>
 </div>
 
@@ -60,10 +305,23 @@
 <script>
     const socket = io();
     const orderId = {{ commande.id }};
+    const lang = {
+        statut: {{ lang.statut|tojson }},
+        alerte_prete: {{ lang.alerte_prete|tojson }},
+        alerte_acceptee: {{ lang.alerte_acceptee|tojson }},
+        alerte_preparation: {{ lang.alerte_preparation|tojson }},
+        alerte_servie: {{ lang.alerte_servie|tojson }},
+        alerte_refusee: {{ lang.alerte_refusee|tojson }},
+    };
 
-    // 🔊 Audio (créé au premier clic, restriction navigateur)
     let audioCtx = null;
     document.addEventListener("click", () => {
+        if (!audioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) audioCtx = new Ctx();
+        }
+    }, { once: true });
+    document.addEventListener("touchstart", () => {
         if (!audioCtx) {
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (Ctx) audioCtx = new Ctx();
@@ -99,16 +357,6 @@
         socket.emit("join_order", { order_id: orderId });
     });
 
-    const labels = {
-        PENDING_CONFIRMATION: "⏳ À confirmer",
-        PENDING: "🕐 En attente",
-        ACCEPTED: "✅ Acceptée",
-        PREPARING: "👨‍🍳 En préparation",
-        READY: "🟢 Prête",
-        SERVED: "🍽️ Servie",
-        PAID: "💰 Payée",
-        REJECTED: "❌ Refusée"
-    };
     const colors = {
         PENDING_CONFIRMATION:"warning", PENDING:"warning",
         ACCEPTED:"info", PREPARING:"primary",
@@ -118,11 +366,11 @@
 
     function majBadge(data) {
         const badge = document.getElementById("badge-statut");
-        if (labels[data.statut]) {
-            badge.textContent = labels[data.statut];
+        if (lang.statut[data.statut]) {
+            badge.textContent = lang.statut[data.statut];
             badge.className = "badge statut-badge bg-" + colors[data.statut];
-            if (data.statut === "READY") badge.classList.add("pulse-success");
-            else badge.classList.remove("pulse-success");
+            if (data.statut === "READY") badge.classList.add("pulse-vert");
+            else badge.classList.remove("pulse-vert");
         }
     }
 
@@ -132,29 +380,26 @@
             if (data.id !== orderId) return;
             majBadge(data);
 
-            // Retour visuel + sonore
+            const zone = document.getElementById("zone-alerte");
+
             if (evt === "ORDER_READY") {
                 jouerSon("pret"); vibrer("pret");
-                document.getElementById("zone-alerte").innerHTML =
-                    '<div class="alert alert-success text-center">🟢 Votre commande est prête !</div>';
+                zone.innerHTML = '<div class="alerte-luxe succes"><strong>🟢 ' + lang.alerte_prete + '</strong></div>';
             } else if (evt === "ORDER_REJECTED") {
                 jouerSon("info"); vibrer("info");
-                location.reload();
+                setTimeout(() => location.reload(), 1000);
             } else if (evt === "ORDER_ACCEPTED") {
-                document.getElementById("zone-alerte").innerHTML =
-                    '<div class="alert alert-success text-center">✅ Commande acceptée</div>';
+                zone.innerHTML = '<div class="alerte-luxe succes">✅ ' + lang.alerte_acceptee + '</div>';
             } else if (evt === "ORDER_PREPARING") {
-                document.getElementById("zone-alerte").innerHTML =
-                    '<div class="alert alert-info text-center">👨‍🍳 En préparation…</div>';
+                zone.innerHTML = '<div class="alerte-luxe info">👨‍🍳 ' + lang.alerte_preparation + '</div>';
             } else if (evt === "ORDER_SERVED") {
-                document.getElementById("zone-alerte").innerHTML =
-                    '<div class="alert alert-secondary text-center">🍽️ Servie. Bon appétit !</div>';
+                zone.innerHTML = '<div class="alerte-luxe info">🍽️ ' + lang.alerte_servie + '</div>';
             }
+
+            location.reload();
         });
     });
 
-    // 🛡️ Filet de sécurité : si le WebSocket tombe, on rafraîchit la page
-    // toutes les 30 secondes pour vérifier le statut.
     setInterval(() => {
         if (!socket.connected) location.reload();
     }, 30000);

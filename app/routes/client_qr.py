@@ -6,28 +6,20 @@ from app.models import (Restaurant, Table, Category, Product,
                         AuditLog)
 from app.sockets import notifier_nouvelle_commande_client
 from app.translations import get_translation, get_available_languages
+from app.cache import cache
 import secrets
 
 client_qr_bp = Blueprint("client_qr", __name__)
 
 
-# =========================================================
-# Langue
-# =========================================================
 def _langue_actuelle():
-    """Renvoie le code de langue actuel (depuis la session ou l'URL)."""
-    # Priorité : paramètre URL ?lang=ar
     lang = request.args.get("lang", "").lower()
     if lang in ("fr", "ar", "en"):
         session["client_lang"] = lang
         return lang
-    # Sinon session
     return session.get("client_lang", "fr")
 
 
-# =========================================================
-# Helpers
-# =========================================================
 def _get_table_ou_404(restaurant_id, token):
     resto = Restaurant.query.get_or_404(restaurant_id)
     if not resto.actif:
@@ -96,7 +88,6 @@ def _log_client(action, restaurant_id, cible=None, details=None):
 
 
 def _contexte_langue():
-    """Contexte à injecter dans tous les templates client."""
     code = _langue_actuelle()
     return {
         "lang": get_translation(code),
@@ -106,21 +97,30 @@ def _contexte_langue():
 
 
 # =========================================================
-# MENU
+# MENU (avec cache 1 min)
 # =========================================================
 @client_qr_bp.route("/<int:restaurant_id>/<token>")
 def menu(restaurant_id, token):
     resto, table = _get_table_ou_404(restaurant_id, token)
-    categories = Category.query.filter_by(restaurant_id=resto.id)\
-                               .order_by(Category.ordre).all()
-    produits = Product.query.filter_by(restaurant_id=resto.id, disponible=True)\
-                            .order_by(Product.nom).all()
-    par_cat = {}
-    for p in produits:
-        par_cat.setdefault(p.category_id, []).append(p)
+
+    # Cache des catégories + produits pendant 60 s
+    cle_cache = f"menu_{resto.id}"
+    data_menu = cache.get(cle_cache)
+    if data_menu is None:
+        categories = Category.query.filter_by(restaurant_id=resto.id)\
+                                   .order_by(Category.ordre).all()
+        produits = Product.query.filter_by(restaurant_id=resto.id, disponible=True)\
+                                .order_by(Product.nom).all()
+        par_cat = {}
+        for p in produits:
+            par_cat.setdefault(p.category_id, []).append(p)
+        data_menu = {"categories": categories, "par_cat": par_cat}
+        cache.set(cle_cache, data_menu, 60)
+
     panier_affiche, total = _construire_panier_affiche(get_panier_client(table.id))
     return render_template("client/menu.html", resto=resto, table=table,
-                           categories=categories, par_cat=par_cat,
+                           categories=data_menu["categories"],
+                           par_cat=data_menu["par_cat"],
                            panier=panier_affiche, total=total,
                            **_contexte_langue())
 

@@ -6,11 +6,11 @@ from app import db
 from app.models import (Category, Product, Table, User, Order, OrderStatus,
                         Payment, PaymentMethod, AuditLog)
 from app.utils import role_required, log_action, abonnement_required
+from app.cache import cache
 import secrets, io, qrcode
 
 gerant_bp = Blueprint("gerant", __name__)
 
-# Données par défaut (partagées avec signup)
 CATEGORIES_DEFAUT = [
     ("Cafés", "☕", 1), ("Boissons", "🥤", 2), ("Sandwichs", "🥪", 3),
     ("Pizzas", "🍕", 4), ("Plats", "🍔", 5), ("Desserts", "🍰", 6),
@@ -23,6 +23,12 @@ def _debut_jour():
 
 
 def _stats_dashboard(rid):
+    """Stats avec cache 30 s pour éviter de surcharger le serveur."""
+    cle_cache = f"dashboard_stats_{rid}"
+    stats = cache.get(cle_cache)
+    if stats is not None:
+        return stats
+
     debut = _debut_jour()
     paiements = Payment.query.filter(Payment.restaurant_id == rid,
                                      Payment.cree_le >= debut).all()
@@ -36,7 +42,7 @@ def _stats_dashboard(rid):
         Order.restaurant_id == rid, Order.statut.in_(OrderStatus.ACTIFS)).count()
     commandes_servies = Order.query.filter_by(
         restaurant_id=rid, statut=OrderStatus.SERVED).count()
-    return dict(
+    stats = dict(
         ca_jour=ca_jour, nb_paiements=nb_paiements, ticket_moyen=ticket_moyen,
         par_methode=par_methode, commandes_actives=commandes_actives,
         commandes_servies=commandes_servies,
@@ -45,6 +51,13 @@ def _stats_dashboard(rid):
         nb_tables=Table.query.filter_by(restaurant_id=rid).count(),
         nb_users=User.query.filter_by(restaurant_id=rid).count(),
     )
+    duree = current_app.config.get("CACHE_DUREE_DASHBOARD", 30)
+    cache.set(cle_cache, stats, duree)
+    return stats
+
+
+def _invalider_dashboard(rid):
+    cache.invalider(f"dashboard_stats_{rid}")
 
 
 @gerant_bp.route("/")
@@ -104,7 +117,6 @@ def categorie_nouvelle():
 @role_required("GERANT")
 @abonnement_required
 def categories_defaut():
-    """Crée les 6 catégories par défaut (pour les restaurants déjà existants)."""
     rid = current_user.restaurant_id
     existantes = {c.nom.lower() for c in Category.query.filter_by(restaurant_id=rid).all()}
     creees = 0
@@ -186,6 +198,7 @@ def produit_nouveau():
                 category_id=int(category_id),
                 restaurant_id=current_user.restaurant_id)
     db.session.add(p); db.session.commit()
+    cache.invalider(f"menu_{current_user.restaurant_id}")
     log_action("PRODUCT_CREATE", cible=f"product#{p.id}",
                details=f"{nom} — {prix:.3f} DT")
     flash(f"Produit « {nom} » créé.", "success")
@@ -209,6 +222,7 @@ def produit_modifier(pid):
     p.category_id = int(request.form.get("category_id", p.category_id))
     p.disponible = "disponible" in request.form
     db.session.commit()
+    cache.invalider(f"menu_{current_user.restaurant_id}")
     log_action("PRODUCT_UPDATE", cible=f"product#{p.id}",
                details=f"Prix {ancien_prix:.3f} → {p.prix:.3f}")
     flash("Produit modifié.", "success")
@@ -223,6 +237,7 @@ def produit_supprimer(pid):
     p = Product.query.filter_by(id=pid, restaurant_id=current_user.restaurant_id).first_or_404()
     nom = p.nom
     db.session.delete(p); db.session.commit()
+    cache.invalider(f"menu_{current_user.restaurant_id}")
     log_action("PRODUCT_DELETE", cible=f"product#{pid}", details=nom)
     flash("Produit supprimé.", "success")
     return redirect(url_for("gerant.produits"))
@@ -268,18 +283,15 @@ def table_nouvelle():
 @role_required("GERANT")
 @abonnement_required
 def tables_defaut():
-    """Crée 10 tables par défaut (01 à 10) pour les restaurants qui n'en ont pas."""
     rid = current_user.restaurant_id
     existantes = {t.numero for t in Table.query.filter_by(restaurant_id=rid).all()}
     creees = 0
     for i in range(1, 11):
         num = f"{i:02d}"
         if num not in existantes:
-            db.session.add(Table(
-                numero=num, places=4,
-                token=secrets.token_urlsafe(16),
-                restaurant_id=rid,
-            ))
+            db.session.add(Table(numero=num, places=4,
+                                 token=secrets.token_urlsafe(16),
+                                 restaurant_id=rid))
             creees += 1
     db.session.commit()
     log_action("TABLE_DEFAULT", details=f"{creees} tables créées")
@@ -350,7 +362,10 @@ def table_qr_png(tid):
     t = Table.query.filter_by(id=tid, restaurant_id=current_user.restaurant_id).first_or_404()
     base = current_app.config["BASE_URL"].rstrip("/")
     url = f"{base}/order/{t.restaurant_id}/{t.token}"
-    img = qrcode.make(url)
+    qr = qrcode.QRCode(version=None, box_size=10, border=2,
+                       error_correction=qrcode.constants.ERROR_CORRECT_M)
+    qr.add_data(url); qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
@@ -407,12 +422,11 @@ def utilisateur_modifier(uid):
     u.role = request.form.get("role", u.role)
     u.actif = "actif" in request.form
     nouveau_mdp = request.form.get("password", "").strip()
-    change_mdp = bool(nouveau_mdp)
-    if change_mdp:
+    if nouveau_mdp:
         u.set_password(nouveau_mdp)
     db.session.commit()
     log_action("USER_UPDATE", cible=f"user#{u.id}",
-               details=f"{u.username} | rôle={u.role} | actif={u.actif} | mdp={change_mdp}")
+               details=f"{u.username} | rôle={u.role} | actif={u.actif}")
     flash("Utilisateur modifié.", "success")
     return redirect(url_for("gerant.utilisateurs"))
 
